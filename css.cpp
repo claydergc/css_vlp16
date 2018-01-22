@@ -76,6 +76,7 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
   //findPeaks(curvature, peaksInds);
   findPeaks(cv, threshold, peaksInds);
 
+  //Agregar keypoints
   for(int i=0; i<peaksInds.size(); ++i)
   {
   	c.index = peaksInds[i];
@@ -89,7 +90,7 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 
   for(int i=0; i<cv.size(); ++i)
   {
-  	curvature[i] = -curvature[i];
+  	curvature[i] = -curvature[i];//cambio de signo a la curvatura para hallar los minimos
   	CurvaturePair cp;
   	cp.s = s[i];
   	cp.curvature = curvature[i];
@@ -104,13 +105,22 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
   //findPeaks(curvature, peaksInds);
   findPeaks(cv, threshold, peaksInds);
 
+  //Agregar keypoints
   for(int i=0; i<peaksInds.size(); ++i)
   {
   	c.index = peaksInds[i];
   	c.sIndex = s[peaksInds[i]];
-    c.curvature = curvature[peaksInds[i]];
+    c.curvature = -curvature[peaksInds[i]];
     keypoints.push_back(c);
   }
+}
+
+void printKeypoints(vector<CurvatureTriplet> keypoints)
+{
+	for(int k=0; k<keypoints.size(); ++k)
+		cout<<keypoints[k].sIndex<<":"<<keypoints[k].curvature<<", ";
+
+	cout<<endl<<endl;
 }
 
 void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
@@ -119,7 +129,7 @@ void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vec
 	PointCloud<PointXYZ> convolvedCurve;
 	convolvedCurve.width = in.size();
 	convolvedCurve.height = 1;
-	convolvedCurve.resize(in.size());
+	convolvedCurve.resize(convolvedCurve.width * convolvedCurve.height);
 
 	float gaussian1[kernelWidth];
 	float gaussian2[kernelWidth];
@@ -128,6 +138,10 @@ void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vec
 
 	int extension = kernelWidth/2;
 	PointCloud<PointXYZ> tmp;
+	tmp.width = in.size() + extension*2;
+	tmp.height = 1;
+	tmp.resize(tmp.width * tmp.height);
+
 	float x=0;
 	float y=0;
 	float x1=0;
@@ -141,13 +155,14 @@ void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vec
 	curvature = vector<float>(in.points.size());
 
 	for(int i=0; i<extension; ++i)
-	tmp.push_back(PointXYZ(in.points[0]));
+		tmp[i] = PointXYZ(in.points[0]);
 
 	for(int i=0; i<in.points.size(); ++i)
-	tmp.push_back(PointXYZ(in.points[i]));
+		tmp[i+extension] = PointXYZ(in.points[i]);
 
 	for(int i=in.points.size(); i<in.points.size()+extension; ++i)
-	tmp.push_back(PointXYZ(in.points[in.points.size()-1]));
+		tmp[i+extension] = PointXYZ(in.points[in.points.size()-1]);
+
 
 	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-(float)kernelWidth/2.0, (float)kernelWidth/2.0);
 	vector<float> sTmp(linspace.data(), linspace.data() + linspace.rows());
@@ -181,7 +196,6 @@ void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vec
 		curvature[i] = (x1*y2-y1*x2);
 		convolvedCurve[i] = PointXYZ(x, y, 0);
 
-
 		x = 0.0;
 		y = 0.0;
 		x1 = 0.0;
@@ -199,5 +213,138 @@ void computeCurvature(PointCloud<PointXYZ> in, int kernelWidth, float sigma, vec
 
 	parametrizeCurve(convolvedCurve, s);
 	getCurvatureExtrema(curvature, s, keypoints);
+	//printKeypoints(keypoints);
+
+}
+
+//void computeScaleSpace(vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE]) //, vector<CurvatureTriplet>& keypointsFinestScale)
+void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE], vector<CurvatureTriplet>& keypointsFinestScale) //, vector<CurvatureTriplet>& keypointsFinestScale)
+{
+	int sigma, width;
+
+	vector<float> curvature;
+	vector<float> s;
+
+	for(int i=0; i<SIGMA_SIZE; ++i)
+	{
+		sigma = i+4;
+
+		cout<<"sigma:"<<sigma<<endl;
+
+		for(int j=0; j<WIDTH_SIZE; ++j)
+		{
+			curvature.clear();
+			s.clear();
+
+			width = ((sigma*(j+2))%2==0)?sigma*(j+2)+1:sigma*(j+2);
+
+			cout<<"width:"<<width<<endl;
+
+			computeCurvature(in, width, sigma, curvature, s, keypoints[i][j]);
+
+			sort(keypoints[i][j].begin(), keypoints[i][j].end(), compareCurvatureTriplet);
+
+			printKeypoints(keypoints[i][j]);
+			
+			if(i==0)
+				keypointsFinestScale.insert(keypointsFinestScale.end(), keypoints[i][j].begin(), keypoints[i][j].end());
+		}
+	}
+
+	sort(keypointsFinestScale.begin(), keypointsFinestScale.end(), compareCurvatureTriplet);
+}
+
+void getKeypointsAtFinestScale(vector<CurvatureTriplet> keypointsFinestScale, vector<CurvatureTriplet> keypointsAtLastWidth, vector<CurvatureTriplet>& selectedKeypointsFinestScale)
+{
+	//for(int k=0; k<keypoints[0][WIDTH_SIZE-1].size(); ++k)
+	for(int k=0; k<keypointsAtLastWidth.size(); ++k)
+	{
+		int idx = findCurvatureTriplet(keypointsFinestScale, keypointsAtLastWidth[k]);
+		
+		if(idx==0)
+			continue;
+
+		int j=idx;
+		int i=idx;
+		int counter = 0;
+
+
+
+		cout<<"Find:"<<keypointsAtLastWidth[k].sIndex<<"->"<<idx<<endl;
+
+		vector<int> indices;//para tomar el valor intermedio de los keypointsFinestScale
+		indices.push_back(keypointsFinestScale[j].index);//para tomar el valor intermedio de los keypointsFinestScale
+		
+		//while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<4.29e-3 && j>-1)
+		//while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<0.01 && j>-1)
+		while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<0.035 && j>-1)//hacia la izquierda de los keypoints
+		{
+			cout<<j<<","<<j-1<<endl;
+			j--;
+			indices.push_back(keypointsFinestScale[j].index);//para tomar el valor intermedio de los keypointsFinestScale
+			counter++;
+		}
+
+		//while((keypointsFinestScale[i+1].sIndex-keypointsFinestScale[i].sIndex)<0.033 && i<keypointsFinestScale.size()-1)
+		while((keypointsFinestScale[i+1].sIndex-keypointsFinestScale[i].sIndex)<0.035 && i<keypointsFinestScale.size()-1)//hacia la derecha de los keypoints
+		{
+			cout<<j<<";"<<j-1<<endl;
+			i++;
+			indices.push_back(keypointsFinestScale[i].index);//para tomar el valor intermedio de los keypointsFinestScale
+			counter++;
+		}
+
+		//tomar el valor intermedio de los keypointsFinestScale
+		sort(indices.begin(), indices.end());
+		keypointsFinestScale[j].index = indices[indices.size()/2];
+		//tomar el valor intermedio de los keypointsFinestScale
+
+		cout<<"Counter: "<<counter<<endl;
+
+		if(counter>=3)
+			selectedKeypointsFinestScale.push_back(keypointsFinestScale[j]);
+	}
+}
+
+void getFinalKeypoints(PointCloud<PointXYZ> in, vector<CurvatureTriplet> selectedKeypointsFinestScale, vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE],
+					   PointCloud<PointXYZ>& keypointsCloud, vector<CurvatureCounter>& curvatureCounter)
+{
+
+	curvatureCounter = vector<CurvatureCounter>(in.size());
+	
+	for(int i=1; i<SIGMA_SIZE; ++i)
+	{
+		for(int j=0; j<WIDTH_SIZE; ++j)
+		{
+			for(int k=0; k<selectedKeypointsFinestScale.size(); ++k)
+			{
+				//if(findByThreshold(keypointsFinestScale[k], keypoints[i][j], 0.05)!=-1)
+				//int idx = findByThreshold(selectedKeypointsFinestScale[k], keypoints[i][j], 0.025);
+				int idx = findByThreshold(selectedKeypointsFinestScale[k], keypoints[i][j], 0.035);
+
+				if(idx!=-1)
+				{
+					//counterPlot[selectedKeypointsFinestScale[k].index] = counterPlot[selectedKeypointsFinestScale[k].index]+1;
+					curvatureCounter[selectedKeypointsFinestScale[k].index].index = selectedKeypointsFinestScale[k].index;
+					curvatureCounter[selectedKeypointsFinestScale[k].index].counter = curvatureCounter[selectedKeypointsFinestScale[k].index].counter+1;
+					curvatureCounter[selectedKeypointsFinestScale[k].index].curvature = keypoints[i][j][idx].curvature;
+				}
+			}
+		}
+	}
+
+	sort(curvatureCounter.begin(), curvatureCounter.end(), compareCurvatureCounter);
+
+	for(int i=0; i<3; ++i)
+	{
+		cout<<"curvature index!: "<<curvatureCounter[i].index<<endl;
+    	cout<<"curvature counter!: "<<curvatureCounter[i].counter<<endl;
+    	
+    	if(curvatureCounter[i].counter>13)
+    	{
+    		
+    		keypointsCloud.push_back(in.points[curvatureCounter[i].index]);
+    	}
+    }
 
 }
