@@ -196,14 +196,14 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 
 //void computeCurvature(PointCloud<PointXYZ> in, float sigma, int kernelWidth, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
 //void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
-void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
+void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
 {
 	float factorWidth = 0.1 * (sigma*100);
 
 	int widthAux = ceil((float)(in.size())*(factorWidth+(float)(width)*0.02));
 	//int kernelWidth = (widthAux%2==0)?widthAux+1:widthAux;
 
-	int kernelWidth = width;
+	const int kernelWidth = width;
 
 	cout<<"width: "<<kernelWidth<<endl;
 
@@ -231,8 +231,6 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
 	float x2=0;
 	float y2=0;
 	float a,b;
-
-	//vector<float> yTmp(m+2*extension);
 
 
 	int i, j, k;
@@ -279,36 +277,16 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
 	}
 
 
-	//plt::plot(sTmp, yTmp);
-	//plt::show();
-
-
-
-	//VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-(float)kernelWidth/2.0, (float)kernelWidth/2.0);
-	//vector<float> sTmp(linspace.data(), linspace.data() + linspace.rows());
-
-	//for(int i=0; i<kernelWidth; ++i)
-		//cout<<sTmp[i]<<endl;
-
-	//int sizeTmp = in.points.size()+extension*2;
-
-	/*for(j=0; j<kernelWidth; ++j)
-	{
-		gaussian1[kernelWidth-1-j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*sTmp[j]*exp((-(sTmp[j]*sTmp[j])) / (2 * sigma*sigma)); //-sTmp[j+i]*exp(-(sTmp[j+i]*sTmp[j+i])/(2*sigma*sigma))/(sigma*sigma*sigma*sqrt(2*M_PI));
-		gaussian2[kernelWidth-1-j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(((sTmp[j]/sigma)*(sTmp[j]/sigma))-1)*(exp((-(sTmp[j]*sTmp[j])) / (2 * sigma *sigma)));//((sTmp[j+i]/sigma)*(sTmp[j+i]/sigma)-1)/(sigma*sigma*sigma*sqrt(2*M_PI))*exp(-(sTmp[j+i]*sTmp[j+i])/(2*sigma*sigma));
-		gaussian3[kernelWidth-1-j] = exp(-(sTmp[j]*sTmp[j])/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
-	}*/
-
-	//cout<<"hola"<<endl;
-
-	vector<float> sKernel(kernelWidth);
+	float sKernel[kernelWidth];
 
 	float min = FLOAT_MAX;
 	float max = FLOAT_MIN;
 
+	//cout<<"gauss diff: "<<sTmp[kernelWidth-1]-sTmp[0]<<endl;
+	//cout<<"gauss diff: "<<sTmp[(sTmp.size()/2)+(kernelWidth-1)]-sTmp[sTmp.size()/2]<<endl;
+
 	for(i = 0; i < in.size(); ++i)
 	{
-
 		float u = s[i];
 
 		//From u to the left
@@ -320,7 +298,20 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
        	//From u to the right
        	for(j=0; j<extension; ++j )
        		sKernel[extension+j+1] = sTmp[i+extension+j+1];
-    
+
+       	//cout<<"gauss diff: "<<sKernel[kernelWidth-1]-sKernel[0]<<endl;
+       	//sigma = ((sKernel[kernelWidth-1]-sKernel[0])/2)/3.4;
+
+       	float sigmaCentro, sigmaIzquierda, sigmaDerecha;
+       	/*sigmaIzquierda = sKernel[extension-(extension/3)];
+       	sigmaCentro = u;
+       	sigmaDerecha = sKernel[extension+(extension/3)];
+       	sigma = ((sigmaDerecha-sigmaCentro)<(sigmaCentro-sigmaIzquierda))?(sigmaDerecha-sigmaCentro):(sigmaCentro-sigmaIzquierda);*/
+
+       	sigmaIzquierda = (u-sKernel[0])/3.5;
+       	sigmaCentro = u;
+       	sigmaDerecha = (sKernel[extension*2]-u)/3.5;
+       	sigma = (sigmaIzquierda<sigmaDerecha)?sigmaIzquierda:sigmaDerecha;
 
 		for(j=0; j<kernelWidth; ++j)
 		{
@@ -329,22 +320,24 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
 			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));//((sTmp[j+i]/sigma)*(sTmp[j+i]/sigma)-1)/(sigma*sigma*sigma*sqrt(2*M_PI))*exp(-(sTmp[j+i]*sTmp[j+i])/(2*sigma*sigma));
 		}
 
-		cout<<"hola->"<<i<<endl;
-
-
-		if(i==0)
+		//if(i==0)
+		if(i==m/2)
 		{
+			//cout<<sKernel[kernelWidth-1]-sKernel[0]<<endl;
+			//cout<<"u:"<<u<<", sigma:"<<sigma<<endl;
+			//cout<<"SI:"<<sigmaIzquierda<<", SD:"<<sigmaDerecha<<endl;
+
+			//for(k=0; k<kernelWidth; ++k)
+				//cout<<sKernel[k]<<endl;
+
 			//printVector(sKernel);
 			//std::vector<float> y(gaussian0, gaussian0 + sizeof(gaussian0) / sizeof(float) );
 			//std::vector<float> y(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
 			//std::vector<float> y(gaussian2, gaussian2 + sizeof(gaussian2) / sizeof(float) );
 
-			//gauss = vector<float>(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
-			//kernel0 = sKernel;
-			//plt::plot(sKernel, y);
+			gauss = vector<float>(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
+			kernel0 = vector<float>(sKernel, sKernel + sizeof(sKernel) / sizeof(float) );
 		}
-
-		cout<<"hola1->"<<i<<endl;
 
 		for(j = 0; j<kernelWidth; ++j)
 		{
@@ -355,8 +348,6 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
 			x2 += tmp.points[i+j].x * gaussian2[j];
 			y2 += tmp.points[i+j].y * gaussian2[j];
 		}
-
-		cout<<"hola2->"<<i<<endl;
 
 		curvature[i] = (x1*y2-y1*x2);
 		convolvedCurve[i] = PointXYZ(x0, y0, 0);
@@ -374,45 +365,8 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<fl
 			max = curvature[i];
 
 	}
-
-	cout<<"hola3"<<endl;
-
-
-	vector<float> x(m);
-
-	for(int i=0; i<m; ++i)
-		x[i] = i;
-
-	cout<<"hola4"<<endl;
-
-	//plt::figure();
-
-	//vector<float> sFinal;
-	//parametrizeCurve(convolvedCurve, sFinal);
-	//getCurvatureExtrema(curvature, sFinal, keypoints);
 	
 	getCurvatureExtrema(curvature, s, keypoints, min, max);
-
-	cout<<"hola5"<<endl;
-
-	//printKeypoints(keypoints);
-
-	//plt::plot(x, curvature);
-	//plt::plot(sFinal, curvature);
-	//plt::plot(s, curvature);
-	//plt::show();
-
-	//for(i=0; i<extension; ++i)
-	//	curvature[i] = curvature[extension];
-
-	//for(i=curvature.size()-1; i>curvature.size()-1-extension; --i)
-	//	curvature[i] = curvature[curvature.size()-1-extension];
-
-
-	//parametrizeCurve(convolvedCurve, s);
-	//getCurvatureExtrema(curvature, s, keypoints);
-	//printKeypoints(keypoints);
-
 }
 
 void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
