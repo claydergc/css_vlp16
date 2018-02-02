@@ -18,6 +18,7 @@ bool compareCurvatureCounter (CurvatureCounter i, CurvatureCounter j)
 int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float threshold, int& idx2)
 {
 	int idx1 = -1;
+	idx2 = -1;
 	float diff;
 	float minDiff = FLOAT_MAX;
 
@@ -177,12 +178,12 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 			abs(curvature[i])>abs(curvature[i-2]) && abs(curvature[i])>abs(curvature[i+2])
 		  )
 		{
-			if(curvature[i]>0 && curvature[i]>(max/4.2) ||
-			   curvature[i]<0 && curvature[i]<(min/4.0)
-			  )
-			//if(curvature[i]>0 && curvature[i]>(max/4.3) ||
-			//   curvature[i]<0 && curvature[i]<(min/4.5)
+			//if(curvature[i]>0 && curvature[i]>(max/4.2) ||
+			//   curvature[i]<0 && curvature[i]<(min/4.0)
 			//  )
+			if(curvature[i]>0 && curvature[i]>(max/4.3) ||
+			   curvature[i]<0 && curvature[i]<(min/4.5)
+			  )
 			{
 				CurvatureTriplet c;
 				c.index = i;
@@ -200,16 +201,10 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
 {
 	//kernel factor = percentage of the points to define the width and std deviation of gaussian kernel
-	//float factorWidth = 0.1 * (sigma*100);
-
-	//int widthAux = ceil((float)(in.size())*(factorWidth+(float)(width)*0.02));
-	//int kernelWidth = (widthAux%2==0)?widthAux+1:widthAux;
-
-	//const int kernelWidth = width;
-
 	int m = in.size();
 	int kernelWidth = ((int)((float)(m)*kernelFactor)%2==0)?(m*kernelFactor+1):(m*kernelFactor);
-	float sigma, sigmaCentro, sigmaIzquierda, sigmaDerecha;
+	float sigma;
+	//sigmaCentro, sigmaIzquierda, sigmaDerecha;
 
 	cout<<"width: "<<kernelWidth<<endl;
 
@@ -241,7 +236,7 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 	int i, j, k;
 	curvature = vector<float>(in.points.size());
 
-	parametrizeCurve(in, s);
+	//parametrizeCurve(in, s);
 
 	float sAux = s[0];
 	vector<float> sTmp(m+2*extension);
@@ -282,7 +277,7 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 	}
 
 
-	float sKernel[kernelWidth];
+	//float sKernel[kernelWidth];
 
 	float min = FLOAT_MAX;
 	float max = FLOAT_MIN;
@@ -292,31 +287,34 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 
 	for(i = 0; i < in.size(); ++i)
 	{
-		float u = s[i];
+		//float u = s[i];
 
 		//From u to the left
-		for(j=0; j<extension; ++j )
+		/*for(j=0; j<extension; ++j )
        		sKernel[extension-j-1] = sTmp[i+extension-j-1];
 
        	sKernel[extension] = u;
 
        	//From u to the right
        	for(j=0; j<extension; ++j )
-       		sKernel[extension+j+1] = sTmp[i+extension+j+1];
+       		sKernel[extension+j+1] = sTmp[i+extension+j+1];*/
 
-       	//cout<<"gauss diff: "<<sKernel[kernelWidth-1]-sKernel[0]<<endl;
-       	//sigma = ((sKernel[kernelWidth-1]-sKernel[0])/2)/3.4;
 
+
+       	float leftLimit = sTmp[i];
+       	float rightLimit = sTmp[i+2*extension];
+       	float u;
        	
-       	/*sigmaIzquierda = sKernel[extension-(extension/3)];
-       	sigmaCentro = u;
-       	sigmaDerecha = sKernel[extension+(extension/3)];
-       	sigma = ((sigmaDerecha-sigmaCentro)<(sigmaCentro-sigmaIzquierda))?(sigmaDerecha-sigmaCentro):(sigmaCentro-sigmaIzquierda);*/
+       	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,leftLimit,rightLimit);
+  		vector<float> sKernel(linspace.data(), linspace.data() + linspace.rows());
+  		u = sKernel[kernelWidth/2];
 
-       	sigmaIzquierda = (u-sKernel[0])/3.5;
-       	sigmaCentro = u;
-       	sigmaDerecha = (sKernel[extension*2]-u)/3.5;
-       	sigma = (sigmaIzquierda<sigmaDerecha)?sigmaIzquierda:sigmaDerecha;
+       	//sigmaIzquierda = (u-sKernel[0])/3.5;
+       	//sigmaCentro = u;
+       	//sigmaDerecha = (sKernel[extension*2]-u)/3.5;
+       	//sigma = (sigmaIzquierda<sigmaDerecha)?sigmaIzquierda:sigmaDerecha;
+
+       	sigma = (u-sKernel[0])/3.5;
 
 		for(j=0; j<kernelWidth; ++j)
 		{
@@ -325,23 +323,10 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));//((sTmp[j+i]/sigma)*(sTmp[j+i]/sigma)-1)/(sigma*sigma*sigma*sqrt(2*M_PI))*exp(-(sTmp[j+i]*sTmp[j+i])/(2*sigma*sigma));
 		}
 
-		//if(i==0)
 		if(i==m/2)
 		{
-			//cout<<sKernel[kernelWidth-1]-sKernel[0]<<endl;
-			//cout<<"u:"<<u<<", sigma:"<<sigma<<endl;
-			//cout<<"SI:"<<sigmaIzquierda<<", SD:"<<sigmaDerecha<<endl;
-
-			//for(k=0; k<kernelWidth; ++k)
-				//cout<<sKernel[k]<<endl;
-
-			//printVector(sKernel);
-			//std::vector<float> y(gaussian0, gaussian0 + sizeof(gaussian0) / sizeof(float) );
-			//std::vector<float> y(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
-			//std::vector<float> y(gaussian2, gaussian2 + sizeof(gaussian2) / sizeof(float) );
-
 			gauss = vector<float>(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
-			kernel0 = vector<float>(sKernel, sKernel + sizeof(sKernel) / sizeof(float) );
+			kernel0 = sKernel;
 		}
 
 		for(j = 0; j<kernelWidth; ++j)

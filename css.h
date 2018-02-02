@@ -58,7 +58,11 @@ void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s);
 //void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints);
 void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints, float min, float max);
 
+
+//void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints);
 void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0);
+
+
 void computeCurvature(PointCloud<PointXYZ> in, float sigma, int kernelWidth, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints);
 //void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0);
 void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE], vector<CurvatureTriplet>& keypointsFinestScale);
