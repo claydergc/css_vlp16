@@ -11,6 +11,9 @@
 
 using namespace std;
 
+//#include "matplotlibcpp.h"
+//namespace plt = matplotlibcpp;
+
 typedef struct curvaturePair
 {
      float s; //parametrized s

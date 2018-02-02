@@ -124,22 +124,15 @@ int main (int argc, char** argv)
 		x0[i] = i;
 
 
-	vector<float> gauss;
-	vector<float> kernel0;
-
-	computeCurvature(*cloud, 0.015, 7, curvature, s, keypoints[0][0], gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	computeCurvature(*cloud, 0.08, 7, curvature, s, keypoints[0][0]);
+	//computeCurvature(*cloud, 0.03, 11, curvature, s, keypoints[0][0]);
+	//computeCurvature(*cloud, 0.05, 37, curvature, s, keypoints[0][0]);
 	printKeypoints(keypoints[0][0]);
-
-	//computeCurvature(*cloud, 0.03, 14, curvature, s, keypoints, gauss, kernel0); //20% puntos = 14 ptos = distancia de 0.2 en x para la gaussiana y dev standar de 0.03
-	/*printKeypoints(keypoints[0][0]);
-
 	
 
-	plt::plot(kernel0, gauss);
-	
-	plt::figure();
+	//plt::plot(s, curvature);
 	plt::plot(x0, curvature);
-	plt::show();*/
+	plt::show();
 
 	return 0;
 

@@ -44,9 +44,9 @@ simpleVis (PointCloud<PointXYZ>::ConstPtr cloud, PointCloud<PointXYZ>::ConstPtr 
   viewer->addPointCloud<PointXYZ> (cloud2, cloud_color_handler, "cloud2");
   viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 10, "cloud2");
 
-  visualization::PointCloudColorHandlerCustom<PointXYZ> cloud_color_handler2 (cloud1, 255, 0, 0);
-  viewer->addPointCloud<PointXYZ> (cloud1, cloud_color_handler2, "cloud1");
-  viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 7, "cloud1");
+  //visualization::PointCloudColorHandlerCustom<PointXYZ> cloud_color_handler2 (cloud1, 255, 0, 0);
+  //viewer->addPointCloud<PointXYZ> (cloud1, cloud_color_handler2, "cloud1");
+  //viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 7, "cloud1");
   
   //viewer->addCoordinateSystem (1.0, "global");
   //viewer->initCameraParameters ();
@@ -81,7 +81,7 @@ int main (int argc, char** argv)
 	cloud->push_back(PointXYZ(7,7,0));
 	cloud->push_back(PointXYZ(8,8,0));
 	cloud->push_back(PointXYZ(9,9,0));
-	cloud->push_back(PointXYZ(10,10,0));
+	cloud->push_back(PointXYZ(10,10,0));*/
 	/*cloud->push_back(PointXYZ(11,11,0));
 	cloud->push_back(PointXYZ(12,12,0));
 	cloud->push_back(PointXYZ(13,13,0));
@@ -102,46 +102,6 @@ int main (int argc, char** argv)
 	cloud->push_back(PointXYZ(18,2,0));
 	cloud->push_back(PointXYZ(19,1,0));
 	cloud->push_back(PointXYZ(20,0,0));*/
-	/*cloud->push_back(PointXYZ(11,9,0));
-	cloud->push_back(PointXYZ(12,8,0));
-	cloud->push_back(PointXYZ(13,7,0));
-	cloud->push_back(PointXYZ(14,6,0));
-	cloud->push_back(PointXYZ(15,5,0));
-	cloud->push_back(PointXYZ(16,6,0));
-	cloud->push_back(PointXYZ(17,7,0));
-	cloud->push_back(PointXYZ(18,8,0));
-	cloud->push_back(PointXYZ(19,9,0));
-	cloud->push_back(PointXYZ(20,10,0));*/
-
-	vector<float> curvature;
-	vector<float> s;
-	//vector<CurvatureTriplet> keypoints;
-	vector<CurvatureTriplet> keypoints[9][7];
-
-	vector<float> x0(cloud->size());
-
-	for(int i=0; i<x0.size(); ++i)
-		x0[i] = i;
-
-
-	vector<float> gauss;
-	vector<float> kernel0;
-
-	computeCurvature(*cloud, 0.015, 7, curvature, s, keypoints[0][0], gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
-	printKeypoints(keypoints[0][0]);
-
-	//computeCurvature(*cloud, 0.03, 14, curvature, s, keypoints, gauss, kernel0); //20% puntos = 14 ptos = distancia de 0.2 en x para la gaussiana y dev standar de 0.03
-	/*printKeypoints(keypoints[0][0]);
-
-	
-
-	plt::plot(kernel0, gauss);
-	
-	plt::figure();
-	plt::plot(x0, curvature);
-	plt::show();*/
-
-	return 0;
 
 
 	
@@ -155,8 +115,10 @@ int main (int argc, char** argv)
  	//Fin Agregado por clayder para ver el tiempo de divison por capas
 
 
-  	
-	
+  	vector<float> curvature;
+	vector<float> s;
+	//vector<CurvatureTriplet> keypoints;
+	vector<CurvatureTriplet> keypoints[9][7];
 
 	//computeCurvature(*cloud, 0.005, 19, curvature, s, keypoints);
 
@@ -230,8 +192,8 @@ int main (int argc, char** argv)
 			s.clear();
 			//keypoints.clear();
 			
-			computeCurvature(*cloud, scales[i], j, curvature, s, keypoints[i][j]);
-			//computeCurvature(*cloud, scales[i], width, curvature, s, keypoints[i][j]);
+			//computeCurvature(*cloud, scales[i], j, curvature, s, keypoints[i][j]);
+			computeCurvature(*cloud, scales[i], width, curvature, s, keypoints[i][j]);
 			//computeCurvature(*cloud, scales[i], width, curvature, s, keypoints);
 
 			printKeypoints(keypoints[i][j]);
@@ -254,16 +216,9 @@ int main (int argc, char** argv)
 				{
 					counterMaxScale[keypoints[i][j][k].index]++;
 
-					//if(counterMaxScale[keypoints[i][j][k].index]==7)
-					if(counterMaxScale[keypoints[i][j][k].index]>4)
+					if(counterMaxScale[keypoints[i][j][k].index]==7)
 						keypointsMaxScale.push_back(keypoints[i][j][k]);
 				}
-			}
-
-			if(i==7 && j==6)
-			{
-				//plt::plot(s, curvature);
-				//plt::show();
 			}
 
 
@@ -308,7 +263,7 @@ int main (int argc, char** argv)
 				plt::plot(s, curvature);
 			}*/
 
-			//width += 4;
+			width += 4;
 		}
 
 		//keypointsPrev = keypoints;
@@ -318,21 +273,21 @@ int main (int argc, char** argv)
 
 	//plt::show();
 
-	return 0;
+	//return 0;
 
-	cout<<endl<<"kp size:"<<keypointsMaxScale.size()<<endl;
+	/*cout<<endl<<"kp size:"<<keypointsMaxScale.size()<<endl;
 
 	for(int i=0; i<keypointsMaxScale.size(); ++i)
 	{
 		cout<<keypointsMaxScale[i].sIndex<<",";
-	}
+	}*/
 
-	/*cout<<endl<<"kp size:"<<keypointsMinScale.size()<<endl;
+	cout<<endl<<"kp size:"<<keypointsMinScale.size()<<endl;
 
 	for(int i=0; i<keypointsMinScale.size(); ++i)
 	{
 		cout<<keypointsMinScale[i].index<<"->"<<keypointsMinScale[i].sIndex<<",";
-	}*/
+	}
 
 
 	cout<<endl<<"hola"<<endl;
@@ -440,12 +395,12 @@ int main (int argc, char** argv)
 
 
 	//plt::figure();
-	//plt::plot(x, counterPlot);
+	plt::plot(x, counterPlot);
 	
 	//plt::plot(s, counterPlot);
 	//plt::plot(s, counterFinesScale);
   	
-  	//plt::show();
+  	plt::show();
 
 
 	//computeCurvature(*cloud, 0.02, 41, curvature, s, keypoints);
