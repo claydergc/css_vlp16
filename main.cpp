@@ -128,27 +128,74 @@ int main (int argc, char** argv)
 	vector<float> kernel0;
 
 	//object5.pcd
-	computeCurvature(*cloud, 0.015, 7, curvature, s, keypoints, gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	/*computeCurvature(*cloud, 0.1, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
 	keypoints.clear();
-	computeCurvature(*cloud, 0.03, 15, curvature, s, keypoints, gauss, kernel0); //20% puntos = 15 ptos = distancia de 0.2 en x para la gaussiana y dev standar de 0.03
+	computeCurvature(*cloud, 0.2, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
 	keypoints.clear();
-	computeCurvature(*cloud, 0.045, 21, curvature, s, keypoints, gauss, kernel0); //30% puntos = 21 ptos = distancia de 0.3 en x para la gaussiana y dev standar de 0.045
+	computeCurvature(*cloud, 0.3, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
 	keypoints.clear();
-	computeCurvature(*cloud, 0.055, 29, curvature, s, keypoints, gauss, kernel0); //40% puntos = 29 ptos = distancia de 0.4 en x para la gaussiana y dev standar de 0.055	
+	computeCurvature(*cloud, 0.4, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
 	keypoints.clear();
-	computeCurvature(*cloud, 0.055, 35, curvature, s, keypoints, gauss, kernel0); //50% puntos = 29 ptos = distancia de 0.4 en x para la gaussiana y dev standar de 0.055	
+	computeCurvature(*cloud, 0.5, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
 	keypoints.clear();
-	computeCurvature(*cloud, 0.055, 43, curvature, s, keypoints, gauss, kernel0); //50% puntos = 29 ptos = distancia de 0.4 en x para la gaussiana y dev standar de 0.055	
+	computeCurvature(*cloud, 0.6, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 	printKeypoints(keypoints);
-	keypoints.clear();
+	keypoints.clear();*/
+
 
 
 	//object4.pcd
+	computeCurvature(*cloud, 0.1, curvature, s, keypoints, gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	/*computeCurvature(*cloud, 0.15, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.2, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.25, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.3, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.35, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.4, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.45, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.5, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.55, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.6, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.65, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+	computeCurvature(*cloud, 0.7, curvature, s, keypoints); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();*/
+	computeCurvature(*cloud, 0.75, curvature, s, keypoints, gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+	printKeypoints(keypoints);
+	keypoints.clear();
+
+
+	
+
 	/*computeCurvature(*cloud, 0.0096, 21, curvature, s, keypoints, gauss, kernel0); //10% puntos = 21 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.0096 = (max-min/2)/3.4
 	printKeypoints(keypoints);
 	keypoints.clear();
@@ -174,7 +221,6 @@ int main (int argc, char** argv)
 	
 
 	plt::plot(kernel0, gauss);
-	
 	plt::figure();
 	plt::plot(x0, curvature);
 	plt::show();

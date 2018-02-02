@@ -196,14 +196,20 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 
 //void computeCurvature(PointCloud<PointXYZ> in, float sigma, int kernelWidth, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
 //void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
-void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
+//void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
+void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
 {
-	float factorWidth = 0.1 * (sigma*100);
+	//kernel factor = percentage of the points to define the width and std deviation of gaussian kernel
+	//float factorWidth = 0.1 * (sigma*100);
 
-	int widthAux = ceil((float)(in.size())*(factorWidth+(float)(width)*0.02));
+	//int widthAux = ceil((float)(in.size())*(factorWidth+(float)(width)*0.02));
 	//int kernelWidth = (widthAux%2==0)?widthAux+1:widthAux;
 
-	const int kernelWidth = width;
+	//const int kernelWidth = width;
+
+	int m = in.size();
+	int kernelWidth = ((int)((float)(m)*kernelFactor)%2==0)?(m*kernelFactor+1):(m*kernelFactor);
+	float sigma, sigmaCentro, sigmaIzquierda, sigmaDerecha;
 
 	cout<<"width: "<<kernelWidth<<endl;
 
@@ -218,7 +224,6 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vec
 	float sum = 0.0;
 
 	int extension = kernelWidth/2;
-	int m = in.size();
 	PointCloud<PointXYZ> tmp;
 	tmp.width = in.size() + extension*2;
 	tmp.height = 1;
@@ -302,7 +307,7 @@ void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vec
        	//cout<<"gauss diff: "<<sKernel[kernelWidth-1]-sKernel[0]<<endl;
        	//sigma = ((sKernel[kernelWidth-1]-sKernel[0])/2)/3.4;
 
-       	float sigmaCentro, sigmaIzquierda, sigmaDerecha;
+       	
        	/*sigmaIzquierda = sKernel[extension-(extension/3)];
        	sigmaCentro = u;
        	sigmaDerecha = sKernel[extension+(extension/3)];
