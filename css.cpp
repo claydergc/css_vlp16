@@ -21,21 +21,34 @@ int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float thre
 	idx2 = -1;
 	float diff;
 	float minDiff = FLOAT_MAX;
+	//float maxCurvature = FLOAT_MIN;
+
+	int sumIdx = 0;
+	int counter = 0;
 
 	for(int i=0; i<vec.size(); ++i)
 	{
 		diff = abs(a.sIndex-vec[i].sIndex);
+		//if(diff<threshold)
 		if(diff<threshold && diff<minDiff)
+		//if( (diff<threshold && abs(vec[i].curvature)>maxCurvature) )
 		{
+			//sumIdx += vec[i].index;
+			//counter++;
 
 			//cout<<a.sIndex<<"<->"<<vec[i].sIndex<<endl;
 
 			idx2 = i;
 			//return vec[i].index;
+			
 			idx1 = vec[i].index;
 			minDiff = diff;
+			//maxCurvature = abs(vec[i].curvature);
 		}
 	}
+
+	//idx1 = sumIdx/counter;
+
 	return idx1;
 }
 
@@ -309,6 +322,11 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
   		vector<float> sKernel(linspace.data(), linspace.data() + linspace.rows());
   		u = sKernel[kernelWidth/2];
 
+  		if(i==0)
+  		{
+  			cout<<"LL: "<<leftLimit<<", RL:"<<rightLimit<<"->Diff:"<<(rightLimit-leftLimit)<<endl;
+  		}
+
        	//sigmaIzquierda = (u-sKernel[0])/3.5;
        	//sigmaCentro = u;
        	//sigmaDerecha = (sKernel[extension*2]-u)/3.5;
@@ -337,6 +355,12 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 			y1 += tmp.points[i+j].y * gaussian1[j];
 			x2 += tmp.points[i+j].x * gaussian2[j];
 			y2 += tmp.points[i+j].y * gaussian2[j];
+
+			if(i==0)
+			{
+				cout<<"sTmp: "<<sTmp[i+j]<<endl;
+				cout<<"sKernel: "<<sKernel[j]<<endl;
+			}
 		}
 
 		curvature[i] = (x1*y2-y1*x2);

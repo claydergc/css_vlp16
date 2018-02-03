@@ -70,12 +70,15 @@ int main (int argc, char** argv)
 	
 	pcl::io::loadPCDFile (argv[1], *cloud);
 
-	int numScales = 15;
-	float scales[numScales] = {0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
+	//int numScales = 15;
+	//float scales[numScales] = {0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
+	int numScales = 13;
+	float scales[numScales] = {0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
 	vector<CurvatureTriplet> keypoints[numScales];
 	vector<float> curvature;
 	vector<float> s;
 
+	vector<CurvatureTriplet> keypointsMinScale;
 	vector<CurvatureTriplet> keypointsMaxScale;
 	
   	clock_t begin = clock();
@@ -92,13 +95,21 @@ int main (int argc, char** argv)
 		computeCurvature(*cloud, scales[i], curvature, s, keypoints[i], gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 		printKeypoints(keypoints[i]);
 
+		/*if(i==0)
+		{
+			keypointsMinScale = keypoints[i];
+			//for(int k=0; k<keypoints[i].size(); ++k)
+				//keypointsMinScale.push_back(keypoints[i][k]);
+		}*/
+
 		if(i==numScales-1)
 		{
-			for(int k=0; k<keypoints[i].size(); ++k)
-				keypointsMaxScale.push_back(keypoints[i][k]);
+			keypointsMaxScale = keypoints[i];
+			//for(int k=0; k<keypoints[i].size(); ++k)
+				//keypointsMaxScale.push_back(keypoints[i][k]);
 		}
 
-		if(i==8)
+		if(i==12)
 		{
 			plt::plot(s, curvature);
 			//plt::plot(kernel0, gauss);
@@ -119,8 +130,12 @@ int main (int argc, char** argv)
 
 	vector<CurvatureTriplet> keypointsTmp;
 	keypointsTmp = keypointsMaxScale;
-	vector<CurvatureCounter> keypointsFinalCounter(keypointsMaxScale.size());
+	//keypointsTmp = keypointsMinScale;
 
+	//printKeypoints(keypointsTmp);
+
+
+	vector<CurvatureCounter> keypointsFinalCounter(keypointsMaxScale.size());
 	for(int k=0; k<keypointsFinalCounter.size(); ++k)
 	{
 		CurvatureCounter cc;
@@ -131,6 +146,17 @@ int main (int argc, char** argv)
 		keypointsFinalCounter[k] = cc;
 	}
 
+	/*vector<CurvatureCounter> keypointsFinalCounter(keypointsMinScale.size());
+	for(int k=0; k<keypointsFinalCounter.size(); ++k)
+	{
+		CurvatureCounter cc;
+		cc.index = keypointsMinScale[k].index;
+		cc.curvature = keypointsMinScale[k].curvature;
+		cc.counter = 0;
+
+		keypointsFinalCounter[k] = cc;
+	}*/
+
 
 	//recorrido para llegar a la posicion del keypoint del finest scale
 	int idx1, idx2 = -1;
@@ -139,7 +165,8 @@ int main (int argc, char** argv)
 	{
 		for(int j=0; j<keypointsTmp.size(); ++j)
 		{
-			idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.029, idx2);
+			//idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.029, idx2);
+			idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.0298, idx2);
 			//idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.121, idx2);
 			//idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.05, idx2);
 
@@ -158,6 +185,48 @@ int main (int argc, char** argv)
 		cout<<endl;
 	}
 
+	/*cout<<"hola"<<endl;
+
+	for(int i=0; i<numScales-1; ++i)
+	{
+		for(int j=0; j<keypointsTmp.size(); ++j)
+		{
+			idx1 = findByThreshold(keypointsTmp[j], keypoints[i+1], 0.01, idx2);
+			//idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.121, idx2);
+			//idx1 = findByThreshold(keypointsTmp[j], keypoints[i-1], 0.05, idx2);
+
+			if(idx1!=-1)
+			{
+				keypointsTmp[j].index = keypoints[i+1][idx2].index;
+				keypointsTmp[j].sIndex = keypoints[i+1][idx2].sIndex;
+
+				keypointsFinalCounter[j].index = keypoints[i+1][idx2].index;
+				keypointsFinalCounter[j].counter = keypointsFinalCounter[j].counter + 1;
+			}
+				
+			cout<<keypointsTmp[j].index<<"->"<<keypointsTmp[j].sIndex<<", ";
+		}
+
+		cout<<endl;
+	}*/
+
+	vector<int> counterPlot(cloud->size());
+
+	vector<float> x(cloud->size());
+
+	for(int i=0; i<x.size(); ++i)
+		x[i] = i;
+
+
+	for(int k=0; k<keypointsFinalCounter.size(); ++k)
+	{
+		keypointsCloud->push_back((*cloud)[keypointsFinalCounter[k].index]);
+		counterPlot[keypointsFinalCounter[k].index] = keypointsFinalCounter[k].counter;
+	}
+
+	plt::figure();
+	plt::plot(x, counterPlot);
+	plt::show();
 
 
 	//keypointsCloud->clear();
