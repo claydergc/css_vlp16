@@ -54,13 +54,14 @@ bool compareCurvatureCounter (CurvatureCounter i, CurvatureCounter j);
 void printKeypoints(vector<CurvatureTriplet> keypoints);
 int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float threshold, int& idx2);
 int findCurvatureTriplet (vector<CurvatureTriplet> vec, CurvatureTriplet c);
+void removeConstantCurvature(vector<CurvatureTriplet>& keypoints);
 void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s);
 //void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints);
-void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints, float min, float max);
+void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints, float min, float max, bool isMaxScale);
 
 
 //void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints);
-void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0);
+void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale);
 
 
 void computeCurvature(PointCloud<PointXYZ> in, float sigma, int kernelWidth, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints);

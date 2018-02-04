@@ -70,10 +70,12 @@ int main (int argc, char** argv)
 	
 	pcl::io::loadPCDFile (argv[1], *cloud);
 
+	int numScales = 16;
+	float scales[numScales] = {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
 	//int numScales = 15;
 	//float scales[numScales] = {0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
-	int numScales = 13;
-	float scales[numScales] = {0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
+	//int numScales = 13;
+	//float scales[numScales] = {0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
 	vector<CurvatureTriplet> keypoints[numScales];
 	vector<float> curvature;
 	vector<float> s;
@@ -91,8 +93,14 @@ int main (int argc, char** argv)
  	//recorrido normal
  	for(int i=0; i<numScales; ++i)
 	{
-		curvature.clear();		
-		computeCurvature(*cloud, scales[i], curvature, s, keypoints[i], gauss, kernel0); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+		curvature.clear();
+
+		if(i!=numScales-1)
+			computeCurvature(*cloud, scales[i], curvature, s, keypoints[i], gauss, kernel0, false); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+		else
+			computeCurvature(*cloud, scales[i], curvature, s, keypoints[i], gauss, kernel0, true); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+		
+		//removeConstantCurvature(keypoints[i]);
 		printKeypoints(keypoints[i]);
 
 		/*if(i==0)
@@ -102,14 +110,18 @@ int main (int argc, char** argv)
 				//keypointsMinScale.push_back(keypoints[i][k]);
 		}*/
 
+
 		if(i==numScales-1)
 		{
+			removeConstantCurvature(keypoints[i]);
 			keypointsMaxScale = keypoints[i];
 			//for(int k=0; k<keypoints[i].size(); ++k)
 				//keypointsMaxScale.push_back(keypoints[i][k]);
 		}
 
-		if(i==12)
+
+
+		if(i==4)
 		{
 			plt::plot(s, curvature);
 			//plt::plot(kernel0, gauss);
