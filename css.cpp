@@ -15,13 +15,11 @@ bool compareCurvatureCounter (CurvatureCounter i, CurvatureCounter j)
 	return (i.counter>j.counter);
 }
 
-int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float threshold, int& idx2)
+int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float threshold)
 {
 	int idx1 = -1;
-	idx2 = -1;
 	float diff;
 	float minDiff = FLOAT_MAX;
-	//float maxCurvature = FLOAT_MIN;
 
 	int sumIdx = 0;
 	int counter = 0;
@@ -29,26 +27,38 @@ int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float thre
 	for(int i=0; i<vec.size(); ++i)
 	{
 		diff = abs(a.sIndex-vec[i].sIndex);
-		//if(diff<threshold)
+		
 		if(diff<threshold && diff<minDiff)
-		//if( (diff<threshold && abs(vec[i].curvature)>maxCurvature) )
 		{
-			//sumIdx += vec[i].index;
-			//counter++;
-
-			//cout<<a.sIndex<<"<->"<<vec[i].sIndex<<endl;
-
-			idx2 = i;
-			//return vec[i].index;
-			
 			idx1 = vec[i].index;
 			minDiff = diff;
-			//maxCurvature = abs(vec[i].curvature);
 		}
 	}
 
-	//idx1 = sumIdx/counter;
+	return idx1;
+}
 
+int findByThresholdAtMinScale(CurvatureTriplet a, vector<CurvatureTriplet> vec, float threshold)
+{
+	int idx1 = -1;
+	float diff;
+
+	int sumIdx = 0;
+	int counter = 0;
+
+	for(int i=0; i<vec.size(); ++i)
+	{
+		diff = abs(a.sIndex-vec[i].sIndex);
+		
+		if(diff<threshold)
+		{
+			sumIdx += vec[i].index;
+			counter++;
+		}
+	}
+
+	idx1 = (counter==0)?-1:(sumIdx/counter);
+	
 	return idx1;
 }
 
@@ -103,70 +113,6 @@ void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s)
 		sumDistances = 0.0;
 	}
 }
-
-/*void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints)
-{
-
-  float threshold = *max_element(curvature.begin(), curvature.end());
-  //threshold = (threshold<0.0)?(threshold+(threshold/2.0)):(threshold/2.0);
-  //threshold = (threshold<0.0)?(threshold+(threshold/10.0)):(threshold-(threshold/6.0));
-  threshold = (threshold<0.0)?(threshold+(threshold/6.0)):(threshold-(threshold/6.0));
-
-  vector<CurvaturePair> cv(curvature.size());
-
-  for(int i=0; i<cv.size(); ++i)
-  {
-  	CurvaturePair cp;
-  	cp.s = s[i];
-  	cp.curvature = curvature[i];
-  	cv[i] = cp;
-  }
-
-  CurvatureTriplet c;
-  vector<int> peaksInds;
-  //findPeaks(curvature, peaksInds);
-  findPeaks(cv, threshold, peaksInds);
-
-  //Agregar keypoints
-  for(int i=0; i<peaksInds.size(); ++i)
-  {
-  	c.index = peaksInds[i];
-  	c.sIndex = s[peaksInds[i]];
-    c.curvature = curvature[peaksInds[i]];
-    keypoints.push_back(c);
-  }
-
-  //for(int i=0; i<curvature.size(); ++i)
-  	//curvature[i] = -curvature[i];
-
-  for(int i=0; i<cv.size(); ++i)
-  {
-  	curvature[i] = -curvature[i];//cambio de signo a la curvatura para hallar los minimos
-  	CurvaturePair cp;
-  	cp.s = s[i];
-  	cp.curvature = curvature[i];
-  	cv[i] = cp;
-
-  }
-
-  threshold = *max_element(curvature.begin(), curvature.end());
-  //threshold = (threshold<0.0)?(threshold+(threshold/2.0)):(threshold/2.0);
-  //threshold = (threshold<0.0)?(threshold+(threshold/10.0)):(threshold-(threshold/6.0));
-  threshold = (threshold<0.0)?(threshold+(threshold/6.0)):(threshold-(threshold/6.0));
-
-  peaksInds.clear();
-  //findPeaks(curvature, peaksInds);
-  findPeaks(cv, threshold, peaksInds);
-
-  //Agregar keypoints
-  for(int i=0; i<peaksInds.size(); ++i)
-  {
-  	c.index = peaksInds[i];
-  	c.sIndex = s[peaksInds[i]];
-    c.curvature = -curvature[peaksInds[i]];//lo devuelvo al signo
-    keypoints.push_back(c);
-  }
-}*/
 
 void printKeypoints(vector<CurvatureTriplet> keypoints)
 {
@@ -336,7 +282,10 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
        	linspace = VectorXd::LinSpaced(kernelWidth,leftLimit,rightLimit);
   		sKernel = vector<float>(linspace.data(), linspace.data() + linspace.rows());
   		u = sKernel[kernelWidth/2];
-       	sigma = (u-sKernel[0])/3.5;
+       	//sigma = (u-sKernel[0])/3.5;
+       	//sigma = (u-sKernel[0])/3.0;
+       	//sigma = (u-sKernel[0])/3.1;
+       	sigma = (u-sKernel[0])/3.6;
 
 		for(j=0; j<kernelWidth; ++j)
 		{
@@ -389,152 +338,99 @@ void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>
 }
 
 //void computeScaleSpace(vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE]) //, vector<CurvatureTriplet>& keypointsFinestScale)
-void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE], vector<CurvatureTriplet>& keypointsFinestScale) //, vector<CurvatureTriplet>& keypointsFinestScale)
+void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s)
 {
-	/*int sigma, width;
+	float scales[NUM_SCALES] = {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
 
 	vector<float> curvature;
-	vector<float> s;
+	//vector<float> s;
+ 	
+ 	parametrizeCurve(in, s);
 
-	for(int i=0; i<SIGMA_SIZE; ++i)
+ 	vector<float> gauss;
+	vector<float> kernel0;
+
+ 	//recorrido normal
+ 	for(int i=0; i<NUM_SCALES; ++i)
 	{
-		sigma = i+4;
+		//curvature.clear();
 
-		//cout<<"sigma:"<<sigma<<endl;
-
-		for(int j=0; j<WIDTH_SIZE; ++j)
-		{
-			curvature.clear();
-			s.clear();
-
-			width = ((sigma*(j+2))%2==0)?sigma*(j+2)+1:sigma*(j+2);
-
-			//cout<<"width:"<<width<<endl;
-
-			computeCurvature(in, width, sigma, curvature, s, keypoints[i][j]);
-
-			sort(keypoints[i][j].begin(), keypoints[i][j].end(), compareCurvatureTriplet);
-
-			//printKeypoints(keypoints[i][j]);
-			
-			if(i==0)
-				keypointsFinestScale.insert(keypointsFinestScale.end(), keypoints[i][j].begin(), keypoints[i][j].end());
-
-			if(i==0 && j==0)
-			{
-				//plt::plot(s, curvature);
-			}
-		}
-	}
-
-	sort(keypointsFinestScale.begin(), keypointsFinestScale.end(), compareCurvatureTriplet);*/
-
-	//plt::show();
-}
-
-void getKeypointsAtFinestScale(vector<CurvatureTriplet> keypointsFinestScale, vector<CurvatureTriplet> keypointsAtLastWidth, vector<CurvatureTriplet>& selectedKeypointsFinestScale)
-{
-	//for(int k=0; k<keypoints[0][WIDTH_SIZE-1].size(); ++k)
-	for(int k=0; k<keypointsAtLastWidth.size(); ++k)
-	{
-		int idx = findCurvatureTriplet(keypointsFinestScale, keypointsAtLastWidth[k]);
+		if(i!=NUM_SCALES-1)
+			computeCurvature(in, scales[i], curvature, s, keypoints[i], gauss, kernel0, false); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+		else
+			computeCurvature(in, scales[i], curvature, s, keypoints[i], gauss, kernel0, true); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
 		
-		if(idx==0)
-			continue;
+		printKeypoints(keypoints[i]);
 
-		int j=idx;
-		int i=idx;
-		int counter = 0;
+		if(i==NUM_SCALES-1)
+			removeConstantCurvature(keypoints[i]);
 
-		//cout<<"Find:"<<keypointsAtLastWidth[k].sIndex<<"->"<<idx<<endl;
-
-		vector<int> indices;//para tomar el valor intermedio de los keypointsFinestScale
-		indices.push_back(keypointsFinestScale[j].index);//para tomar el valor intermedio de los keypointsFinestScale
-		
-		//while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<4.29e-3 && j>-1)
-		//while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<0.01 && j>-1)
-		while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<0.033 && j>-1)//hacia la izquierda de los keypoints
-		//while((keypointsFinestScale[j].sIndex-keypointsFinestScale[j-1].sIndex)<4.29e-3 && j>-1)
+		/*if(i==4)
 		{
-			//cout<<j<<","<<j-1<<endl;
-			j--;
-			indices.push_back(keypointsFinestScale[j].index);//para tomar el valor intermedio de los keypointsFinestScale
-			counter++;
-		}
+			plt::plot(s, curvature);
+			//plt::plot(kernel0, gauss);
+			plt::show();
+		}*/
 
-		//while((keypointsFinestScale[i+1].sIndex-keypointsFinestScale[i].sIndex)<0.033 && i<keypointsFinestScale.size()-1)
-		while((keypointsFinestScale[i+1].sIndex-keypointsFinestScale[i].sIndex)<0.033 && i<keypointsFinestScale.size()-1)//hacia la derecha de los keypoints
-		{
-			//cout<<j<<";"<<j-1<<endl;
-			i++;
-			indices.push_back(keypointsFinestScale[i].index);//para tomar el valor intermedio de los keypointsFinestScale
-			counter++;
-		}
-
-		//tomar el valor intermedio de los keypointsFinestScale
-		sort(indices.begin(), indices.end());
-		keypointsFinestScale[j].index = indices[indices.size()/2];
-		//tomar el valor intermedio de los keypointsFinestScale
-
-		//cout<<"Counter: "<<counter<<endl;
-
-		//if(counter>=3)
-		if(counter>=1)
-			selectedKeypointsFinestScale.push_back(keypointsFinestScale[j]);
+		cout<<"*******************************************"<<endl;
 	}
 }
 
-void getFinalKeypoints(PointCloud<PointXYZ> in, vector<CurvatureTriplet> selectedKeypointsFinestScale, vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE],
-					   PointCloud<PointXYZ>& keypointsCloud, vector<CurvatureCounter>& curvatureCounter)
+void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float> s, PointCloud<PointXYZ>& keypointsCloud)
 {
-
-	curvatureCounter = vector<CurvatureCounter>(in.size());
+	vector<CurvatureTriplet> keypointsScaleIterator;
+	keypointsScaleIterator = keypoints[NUM_SCALES-1];
 	
-	for(int i=1; i<SIGMA_SIZE; ++i)
-	{
-		for(int j=0; j<WIDTH_SIZE; ++j)
-		{
-			for(int k=0; k<selectedKeypointsFinestScale.size(); ++k)
-			{
-				//if(findByThreshold(keypointsFinestScale[k], keypoints[i][j], 0.05)!=-1)
-				//int idx = findByThreshold(selectedKeypointsFinestScale[k], keypoints[i][j], 0.025);
-				int idx2 = -1;
-				int idx = findByThreshold(selectedKeypointsFinestScale[k], keypoints[i][j], 0.033, idx2);
-				//int idx = findByThreshold(selectedKeypointsFinestScale[k], keypoints[i][j], 0.025, idx2);
+	vector<CurvatureCounter> keypointsFinalCounter(keypointsScaleIterator.size());
 
-				if(idx!=-1 && idx2!=-1)
-				{
-					//cout<<"i:"<<i<<"j:"<<j<<"->"<<keypoints[i][j][idx].curvature<<endl; 
-					//counterPlot[selectedKeypointsFinestScale[k].index] = counterPlot[selectedKeypointsFinestScale[k].index]+1;
-					curvatureCounter[selectedKeypointsFinestScale[k].index].index = selectedKeypointsFinestScale[k].index;
-					curvatureCounter[selectedKeypointsFinestScale[k].index].counter = curvatureCounter[selectedKeypointsFinestScale[k].index].counter+1;
-					//curvatureCounter[selectedKeypointsFinestScale[k].index].curvature = keypoints[i][j][idx].curvature;
-					curvatureCounter[selectedKeypointsFinestScale[k].index].curvature = keypoints[i][j][idx2].curvature;
-					//cout<<"i:"<<i<<endl;
-				}
-			}
-		}
+
+	for(int k=0; k<keypointsFinalCounter.size(); ++k)
+	{
+		CurvatureCounter cc;
+		cc.index = keypointsScaleIterator[k].index;
+		cc.curvature = keypointsScaleIterator[k].curvature;
+		cc.counter = 0;
+
+		keypointsFinalCounter[k] = cc;
 	}
 
-	sort(curvatureCounter.begin(), curvatureCounter.end(), compareCurvatureCounter);
-
-	/*for(int i=0; i<3; ++i)
+	//recorrido para llegar a la posicion del keypoint del finest scale
+	int idx;
+	
+	for(int i=NUM_SCALES-1; i>0; --i)
 	{
-		//cout<<"index: "<<curvatureCounter[i].index<<endl;
-    	cout<<"counter: "<<curvatureCounter[i].counter<<endl;
-    	//cout<<"curvature: "<<curvatureCounter[i].curvature<<endl;
-    	
-    	//if(curvatureCounter[i].counter>0)
-    		//keypointsCloud.push_back(in.points[curvatureCounter[i].index]);
-    }
+		for(int j=0; j<keypointsScaleIterator.size(); ++j)
+		{
+			//idx1 = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.0298, idx2);
 
-    cout<<"counterddd: "<<curvatureCounter[0].counter<<endl;*/
+			if(i==1)
+				idx = findByThresholdAtMinScale(keypointsScaleIterator[j], keypoints[i-1], 0.0298);
+			else
+				idx = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.0298);
+	
+			if(idx!=-1)
+			{
+				/*keypointsScaleIterator[j].index = keypoints[i-1][idx2].index;
+				keypointsScaleIterator[j].sIndex = keypoints[i-1][idx2].sIndex;
 
-    if(curvatureCounter[0].counter>23)
-		keypointsCloud.push_back(in.points[curvatureCounter[0].index]);
-	if(curvatureCounter[1].counter>10)
-		keypointsCloud.push_back(in.points[curvatureCounter[1].index]);
-	if(curvatureCounter[2].counter>1)
-		keypointsCloud.push_back(in.points[curvatureCounter[2].index]);
+				keypointsFinalCounter[j].index = keypoints[i-1][idx2].index;
+				keypointsFinalCounter[j].counter = keypointsFinalCounter[j].counter + 1;*/
 
+				keypointsScaleIterator[j].index = idx;
+				keypointsScaleIterator[j].sIndex = s[idx];
+
+				keypointsFinalCounter[j].index = idx;
+				keypointsFinalCounter[j].counter = keypointsFinalCounter[j].counter + 1;
+			}
+				
+			cout<<keypointsScaleIterator[j].index<<"->"<<keypointsScaleIterator[j].sIndex<<", ";
+		}
+
+		cout<<endl;
+	}
+
+	for(int k=0; k<keypointsFinalCounter.size(); ++k)
+	{
+		keypointsCloud.push_back(in[keypointsFinalCounter[k].index]);
+	}
 }
