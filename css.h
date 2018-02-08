@@ -26,6 +26,8 @@ using namespace Eigen;
 const float FLOAT_MIN = std::numeric_limits<float>::min();
 const float FLOAT_MAX = std::numeric_limits<float>::max();
 const int NUM_SCALES = 16;
+//const int NUM_SCALES = 15;
+//const int NUM_SCALES = 9;
 
 typedef struct curvatureTriplet
 {

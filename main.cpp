@@ -18,8 +18,8 @@ using namespace std;
 using namespace pcl;
 using namespace Eigen;
 
-#include "matplotlibcpp.h"
-namespace plt = matplotlibcpp;
+//#include "matplotlibcpp.h"
+//namespace plt = matplotlibcpp;
 
 const unsigned int MIN_CLUSTER_POINTS = 70;
 const unsigned int MAX_CLUSTER_POINTS = 300;
@@ -73,8 +73,14 @@ int main (int argc, char** argv)
 	vector<float> curvature[NUM_SCALES];
 	vector<float> s;
 
+	clock_t begin = clock();
 	computeScaleSpace(*cloud, keypoints, s);
 	getFinalKeypointsAtMinScale(*cloud, keypoints, s, *keypointsCloud);
+	clock_t end = clock();  
+  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  	cout<<"************************************"<<endl<<endl;
+  	cout<<"Ring extraction time: "<<elapsed_secs<<endl;
+  	cout<<"************************************"<<endl<<endl;
 
 
 	boost::shared_ptr<visualization::PCLVisualizer> viewer;

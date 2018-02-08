@@ -9,6 +9,8 @@
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/css.cpp
 css.h
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/css.h
+matplotlibcpp.h
+/home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/matplotlibcpp.h
 
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/css.h
 iostream
@@ -49,8 +51,6 @@ util.h
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/util.h
 css.h
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/css.h
-matplotlibcpp.h
-/home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/matplotlibcpp.h
 
 /home/claydergc/MyPCLExamples/FeatureExtraction/css_vlp16/matplotlibcpp.h
 vector
