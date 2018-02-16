@@ -11,8 +11,8 @@
 #include <fstream>
 #include <cmath>
 
-#include "util.h"
 #include "css.h"
+#include "gaussians.h"
 
 using namespace std;
 using namespace pcl;
@@ -68,13 +68,17 @@ int main (int argc, char** argv)
 	
 	pcl::io::loadPCDFile (argv[1], *cloud);
 
-
+	vector<float> gaussian1[NUM_GAUSSIANS];
+	vector<float> gaussian2[NUM_GAUSSIANS];
 	vector<CurvatureTriplet> keypoints[NUM_SCALES];
 	vector<float> curvature[NUM_SCALES];
 	vector<float> s;
 
+	initKernels(gaussian1, gaussian2);
+
 	clock_t begin = clock();
-	computeScaleSpace(*cloud, keypoints, s);
+	computeScaleSpace(*cloud, gaussian1, gaussian2, keypoints, s);
+	//computeScaleSpace(*cloud, keypoints, s);
 	getFinalKeypointsAtMinScale(*cloud, keypoints, s, *keypointsCloud);
 	clock_t end = clock();  
   	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -92,6 +96,69 @@ int main (int argc, char** argv)
     	viewer->spinOnce (100);
     	boost::this_thread::sleep (boost::posix_time::microseconds (100000));
   	}
+
+
+	/*ofstream myfile;
+  	myfile.open ("gaussian_kernels.h");
+
+  	ofstream myfile2;
+  	myfile2.open ("gaussian_kernels.cpp");
+
+  	int k = 0;
+
+
+  	//vector<float> gaussian1[numKernels];
+  	//vector<float> gaussian2[numKernels];
+
+	//for(int kernelWidth=3; kernelWidth<=241; kernelWidth+=2)
+	for(int kernelWidth=3; kernelWidth<=321; kernelWidth+=2)
+	{
+	   	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-0.2,0.2);
+		vector<float> sKernel(linspace.data(), linspace.data() + linspace.rows());
+		float u = 0.0;
+	   	float sigma = 0.05;
+	   	float gaussian1[kernelWidth];
+		float gaussian2[kernelWidth];
+
+	   	stringstream ss1, ss2, ss3, ss4;
+
+	   	ss1<< "const float g1_"<<k<<"[] = {";
+	   	ss2<< "const float g2_"<<k<<"[] = {";
+	   	
+
+		for(int j=0; j<kernelWidth; ++j)
+		{
+
+			gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sKernel[j]-u)*exp((-( (sKernel[j]-u)*(sKernel[j]-u)) ) / (2 * sigma*sigma));
+			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));
+			if (j!=kernelWidth-1)
+			{
+				ss1<<gaussian1[j]<<",";
+				ss2<<gaussian2[j]<<",";
+			}
+			else
+			{
+				ss1<<gaussian1[j]<<"};";
+				ss2<<gaussian2[j]<<"};";
+			}
+			
+		}
+
+		
+		ss3 << "gaussian1["<<k<<"] = vector<float>(g1_"<<k<<", g1_"<<k<<" + sizeof(g1_"<<k<<") / sizeof(float) );";
+		ss4 << "gaussian2["<<k<<"] = vector<float>(g2_"<<k<<", g2_"<<k<<" + sizeof(g2_"<<k<<") / sizeof(float) );";
+
+	   	myfile << ss1.str() <<"\n";
+	   	myfile << ss2.str() <<"\n";
+	   	
+	   	myfile2 <<"\t" << ss3.str() <<"\n";
+	   	myfile2 <<"\t" << ss4.str() <<"\n\n";
+
+		k++;
+	}
+
+	myfile.close();
+	myfile2.close();*/
 
 	return 0;
 }

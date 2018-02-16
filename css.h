@@ -13,6 +13,7 @@
 
 #include "util.h"
 
+
 //#define SIGMA_SIZE 7
 //#define WIDTH_SIZE 7
 
@@ -26,6 +27,7 @@ using namespace Eigen;
 const float FLOAT_MIN = std::numeric_limits<float>::min();
 const float FLOAT_MAX = std::numeric_limits<float>::max();
 const int NUM_SCALES = 16;
+const int NUM_GAUSSIANS = 120;
 //const int NUM_SCALES = 15;
 //const int NUM_SCALES = 9;
 
@@ -63,9 +65,17 @@ void removeConstantCurvature(vector<CurvatureTriplet>& keypoints);//revisar
 
 void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s);
 void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints, float min, float max, bool isMaxScale);
-void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale);
+void getCurvatureExtremaAtMaxScale(vector<float> curvature, vector<float> s, float min, float max, vector<CurvatureTriplet>& keypoints);
+
+//void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale);
+void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale);
+
 //void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES]);
-void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s);
+
+//void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s);
+void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s);
+
+
 //void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], PointCloud<PointXYZ>& keypointsCloud);
 void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float> s, PointCloud<PointXYZ>& keypointsCloud);
 

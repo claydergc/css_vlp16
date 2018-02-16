@@ -235,6 +235,7 @@ void findPeaks(vector<CurvaturePair> x0, float threshold, vector<int>& peakInds)
     	{        	
         	vector<int> peakLocTmp(peakLoc.begin(), peakLoc.begin()+cInd-1);
 			//selectElements(ind, peakLocTmp, peakInds);
+            
             selectElements(ind, peakLocTmp, x0, threshold, peakInds);
         	//peakMags = vector<float>(peakLoc.begin(), peakLoc.begin()+cInd-1);
         }

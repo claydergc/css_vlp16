@@ -150,6 +150,33 @@ css.cpp.s:
 	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/css.cpp.s
 .PHONY : css.cpp.s
 
+gaussians.o: gaussians.cpp.o
+
+.PHONY : gaussians.o
+
+# target to build an object file
+gaussians.cpp.o:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/gaussians.cpp.o
+.PHONY : gaussians.cpp.o
+
+gaussians.i: gaussians.cpp.i
+
+.PHONY : gaussians.i
+
+# target to preprocess a source file
+gaussians.cpp.i:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/gaussians.cpp.i
+.PHONY : gaussians.cpp.i
+
+gaussians.s: gaussians.cpp.s
+
+.PHONY : gaussians.s
+
+# target to generate assembly for a file
+gaussians.cpp.s:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/gaussians.cpp.s
+.PHONY : gaussians.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -216,6 +243,9 @@ help:
 	@echo "... css.o"
 	@echo "... css.i"
 	@echo "... css.s"
+	@echo "... gaussians.o"
+	@echo "... gaussians.i"
+	@echo "... gaussians.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

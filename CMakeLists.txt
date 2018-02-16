@@ -15,6 +15,6 @@ add_definitions(${PCL_DEFINITIONS})
 #add_executable (range_measure range_measure.cpp)
 #target_link_libraries (range_measure ${PCL_LIBRARIES} python2.7)
 
-add_executable (main main.cpp css.cpp util.cpp)
+add_executable (main main.cpp css.cpp gaussians.cpp util.cpp)
 target_link_libraries (main ${PCL_LIBRARIES} python2.7 boost_iostreams boost_system boost_filesystem)
 

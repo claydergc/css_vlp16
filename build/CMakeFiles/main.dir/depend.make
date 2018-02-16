@@ -310,7 +310,11 @@ CMakeFiles/main.dir/css.cpp.o: /usr/local/include/pcl-1.8/pcl/point_traits.h
 CMakeFiles/main.dir/css.cpp.o: /usr/local/include/pcl-1.8/pcl/point_types.h
 CMakeFiles/main.dir/css.cpp.o: /usr/local/include/pcl-1.8/pcl/register_point_struct.h
 
+CMakeFiles/main.dir/gaussians.cpp.o: ../gaussians.cpp
+CMakeFiles/main.dir/gaussians.cpp.o: ../gaussians.h
+
 CMakeFiles/main.dir/main.cpp.o: ../css.h
+CMakeFiles/main.dir/main.cpp.o: ../gaussians.h
 CMakeFiles/main.dir/main.cpp.o: ../main.cpp
 CMakeFiles/main.dir/main.cpp.o: ../util.h
 CMakeFiles/main.dir/main.cpp.o: /usr/include/eigen3/Eigen/Cholesky
