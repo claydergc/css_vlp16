@@ -111,12 +111,12 @@ void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s)
 
 	for(int i=1; i<in.size(); ++i)
 	{
-		/*a.x = in[i].x; b.x = in[i-1].x;
-		a.y = in[i].y; b.y = in[i-1].y;
-		a.z = 0.0   ;  b.z = 0.0;*/
 		a.x = in[i].x; b.x = in[i-1].x;
+		a.y = in[i].y; b.y = in[i-1].y;
+		a.z = 0.0   ;  b.z = 0.0;
+		/*a.x = in[i].x; b.x = in[i-1].x;
 		a.z = in[i].z; b.z = in[i-1].z;
-		a.y = 0.0   ;  b.y = 0.0;
+		a.y = 0.0   ;  b.y = 0.0;*/
 		d[i] = pcl::euclideanDistance(a, b);
 		Dp += d[i];
 	}
@@ -276,7 +276,7 @@ void removeConstantCurvature(vector<CurvatureTriplet>& keypoints)
 }
 
 void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], float kernelFactor, vector<float>& curvature, 
-	vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale)
+	vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale, PointCloud<PointXYZ>& convolvedCurve)
 {
 	//kernel factor = percentage of the points to define the width and std deviation of gaussian kernel
 	int m = in.size();
@@ -289,9 +289,13 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 
 	int extension = kernelWidth/2;
 	PointCloud<PointXYZ> tmp;
-	tmp.width = in.size() + extension*2;
+	tmp.width = m + extension*2;
 	tmp.height = 1;
 	tmp.resize(tmp.width * tmp.height);
+
+	convolvedCurve.width = m;
+	convolvedCurve.height = 1;
+	convolvedCurve.resize(convolvedCurve.width * convolvedCurve.height);
 
 	float x0=0;
 	float y0=0;
@@ -325,8 +329,8 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 
 	bool containsZeroCurvature = false;
 
-	vector<float> convolvedCurveX(in.size());
-	vector<float> convolvedCurveY(in.size());
+	//convolvedCurveX = vector<float>(m);
+	//convolvedCurveY = vector<float>(m);
   	
 	for(i = 0; i < in.size(); ++i)
 	{
@@ -350,19 +354,19 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 		//Convolution
 		for(j = 0; j<kernelWidth; ++j)
 		{
-			/*x0 += tmp.points[i+j].x * gaussian0[j];
+			x0 += tmp.points[i+j].x * gaussian0[j];
 			y0 += tmp.points[i+j].y * gaussian0[j];
 			x1 += tmp.points[i+j].x * gaussian1[j];
 			y1 += tmp.points[i+j].y * gaussian1[j];
 			x2 += tmp.points[i+j].x * gaussian2[j];
-			y2 += tmp.points[i+j].y * gaussian2[j];*/
+			y2 += tmp.points[i+j].y * gaussian2[j];
 
-			x0 += tmp.points[i+j].x * gaussian0[j];
+			/*x0 += tmp.points[i+j].x * gaussian0[j];
 			y0 += tmp.points[i+j].z * gaussian0[j];
 			x1 += tmp.points[i+j].x * gaussian1[j];
 			y1 += tmp.points[i+j].z * gaussian1[j];
 			x2 += tmp.points[i+j].x * gaussian2[j];
-			y2 += tmp.points[i+j].z * gaussian2[j];
+			y2 += tmp.points[i+j].z * gaussian2[j];*/
 			
 			/*x1 += tmp.points[i+j].x * gaussian1[kernelWidth/2-1][j];
 			y1 += tmp.points[i+j].y * gaussian1[kernelWidth/2-1][j];
@@ -375,8 +379,14 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 			y2 += tmp.points[i+j].z * gaussian2[kernelWidth/2-1][j];*/
 		}
 
-		convolvedCurveX[i] = x0;
-		convolvedCurveY[i] = y0;
+		//convolvedCurveX[i] = x0;
+		//convolvedCurveY[i] = y0;
+
+
+		convolvedCurve.points[i].x = x0;
+		convolvedCurve.points[i].y = y0;
+		convolvedCurve.points[i].z = 0.0;
+
 		//curvature[i] = (x1*y2-y1*x2);
 		curvature[i] = (x1*y2-y1*x2) / pow((x1*x1+y1*y1), 1.5);	
 
@@ -397,7 +407,8 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 
 	}
 
-	if((kernelFactor-0.8)<0.01 && (kernelFactor-0.8)>0)
+	//plot curvature or convolved curves
+	if((kernelFactor-0.2)<0.01 && (kernelFactor-0.2)>0)
 	{
 		//plt::plot(convolvedCurveX, convolvedCurveY);
 		//plt::plot(curvature);
@@ -412,7 +423,7 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 }
 
 //void computeScaleSpace(vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE]) //, vector<CurvatureTriplet>& keypointsFinestScale)
-void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s)
+void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s, PointCloud<PointXYZ> convolvedCurves[NUM_SCALES])
 //void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s)
 {
 	float scales[NUM_SCALES] = {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
@@ -439,9 +450,9 @@ void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUS
 
 		//compute curvatures and store keypoints of current scale in keypoints[i]
 		if(i!=NUM_SCALES-1)
-			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, false);
+			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, false, convolvedCurves[i]);
 		else
-			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, true);
+			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, true, convolvedCurves[i]);
 		
 		printKeypoints(keypoints[i]);
 	}

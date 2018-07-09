@@ -49,13 +49,13 @@ void getCurvatureExtremaAtMaxScale(std::vector<float> curvature, std::vector<flo
 
 //void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale);
 void computeCurvature(pcl::PointCloud<pcl::PointXYZ> in, std::vector<float> gaussian1[NUM_GAUSSIANS], std::vector<float> gaussian2[NUM_GAUSSIANS], float kernelFactor, 
-	std::vector<float>& curvature, std::vector<float>& s, std::vector<CurvatureTriplet>& keypoints, std::vector<float>& gauss, std::vector<float>& kernel0, bool isMaxScale);
+	std::vector<float>& curvature, std::vector<float>& s, std::vector<CurvatureTriplet>& keypoints, std::vector<float>& gauss, std::vector<float>& kernel0, bool isMaxScale, pcl::PointCloud<pcl::PointXYZ>& convolvedCurve);
 
 //void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES]);
 
 //void computeScaleSpace(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float>& s);
 void computeScaleSpace(pcl::PointCloud<pcl::PointXYZ> in, std::vector<float> gaussian1[NUM_GAUSSIANS], std::vector<float> gaussian2[NUM_GAUSSIANS], 
-	std::vector<CurvatureTriplet> keypoints[NUM_SCALES], std::vector<float>& s);
+	std::vector<CurvatureTriplet> keypoints[NUM_SCALES], std::vector<float>& s, pcl::PointCloud<pcl::PointXYZ> convolvedCurves[NUM_SCALES]);
 
 
 //void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], PointCloud<PointXYZ>& keypointsCloud);

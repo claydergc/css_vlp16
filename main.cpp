@@ -58,6 +58,8 @@ int main (int argc, char** argv)
 {
 	PointCloud<PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 	PointCloud<PointXYZ>::Ptr keypointsCloud (new pcl::PointCloud<pcl::PointXYZ>);
+	PointCloud<PointXYZ> convolvedCurves[NUM_SCALES];
+
 	
 	pcl::io::loadPCDFile (argv[1], *cloud);
 
@@ -71,7 +73,7 @@ int main (int argc, char** argv)
 
 
 	clock_t begin = clock();
-	computeScaleSpace(*cloud, gaussian1, gaussian2, keypoints, s);
+	computeScaleSpace(*cloud, gaussian1, gaussian2, keypoints, s, convolvedCurves);
 	//computeScaleSpace(*cloud, keypoints, s);
 	getFinalKeypointsAtMinScale(*cloud, keypoints, s, *keypointsCloud);
 	clock_t end = clock();  
@@ -97,6 +99,8 @@ int main (int argc, char** argv)
 
   	}*/
 
+  	cloud->clear();
+  	*cloud = convolvedCurves[14];
 
 	boost::shared_ptr<visualization::PCLVisualizer> viewer;
   	//viewer = simpleVis(filteredCloud2, keypointsCloud);
