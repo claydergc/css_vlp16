@@ -1,8 +1,12 @@
 // css.cpp
 #include "css.h"
-
 #include "matplotlibcpp.h"
+
 namespace plt = matplotlibcpp;
+
+using namespace std;
+using namespace pcl;
+using namespace Eigen;
 
 
 bool compareCurvatureTriplet (CurvatureTriplet i, CurvatureTriplet j)
@@ -32,7 +36,7 @@ int findByThreshold(CurvatureTriplet a, vector<CurvatureTriplet> vec, float thre
 		//if(diff<threshold && diff<minDiff)
 		{
 			idx1 = vec[i].index;
-			minDiff = diff;
+			minDiff = diff;//store the minimum difference
 		}
 	}
 
@@ -53,11 +57,16 @@ int findByThresholdAtMinScale(CurvatureTriplet a, vector<CurvatureTriplet> vec, 
 		
 		if(diff<0.0000001)
 		{
+			//cout<<"hola1"<<endl;
 			return vec[i].index;
 		}
 		//else if(diff<threshold)
 		else if(diff<=threshold)
 		{
+			if(i<2 || i>vec.size()-2)
+				return vec[i].index;
+
+			//cout<<"hola2"<<endl;
 			sumIdx += vec[i].index;
 			counter++;
 		}
@@ -102,10 +111,12 @@ void parametrizeCurve(PointCloud<PointXYZ> in, vector<float> &s)
 
 	for(int i=1; i<in.size(); ++i)
 	{
-		a.x = in[i].x; b.x = in[i-1].x;
+		/*a.x = in[i].x; b.x = in[i-1].x;
 		a.y = in[i].y; b.y = in[i-1].y;
-		a.z = 0.0   ;  b.z = 0.0;
-		//d[i] = pcl::euclideanDistance(in[i], in[i-1]);
+		a.z = 0.0   ;  b.z = 0.0;*/
+		a.x = in[i].x; b.x = in[i-1].x;
+		a.z = in[i].z; b.z = in[i-1].z;
+		a.y = 0.0   ;  b.y = 0.0;
 		d[i] = pcl::euclideanDistance(a, b);
 		Dp += d[i];
 	}
@@ -141,68 +152,6 @@ void printArray(float v[], int size)
 		cout<<v[i]<<endl;
 }
 
-void getCurvatureExtremaAtMaxScale(vector<float> curvature, vector<float> s, float min, float max, vector<CurvatureTriplet>& keypoints)
-{
-
-  //float threshold = *max_element(curvature.begin(), curvature.end());
-  
-  float threshold = max;
-  threshold = threshold/2.3;
-  //threshold = (threshold<0.0)?(threshold+(threshold/2.3)):(threshold-(threshold/2.3));
-  //threshold = (threshold<0.0)?(threshold+(threshold/6.0)):(threshold-(threshold/6.0));
-
-  vector<CurvaturePair> cv(curvature.size());
-
-  for(int i=0; i<cv.size(); ++i)
-  {
-  	CurvaturePair cp;
-  	cp.s = s[i];
-  	cp.curvature = curvature[i];
-  	cv[i] = cp;
-  }
-
-  CurvatureTriplet c;
-  vector<int> peaksInds;
-  findPeaks(cv, threshold, peaksInds);
-
-  //Agregar keypoints
-  for(int i=0; i<peaksInds.size(); ++i)
-  {
-  	c.index = peaksInds[i];
-  	c.sIndex = s[peaksInds[i]];
-    c.curvature = curvature[peaksInds[i]];
-    keypoints.push_back(c);
-  }
-
-  for(int i=0; i<cv.size(); ++i)
-  {
-  	CurvaturePair cp;
-  	cp.s = s[i];
-  	cp.curvature = -curvature[i];//cambio de signo a la curvatura para hallar los minimos
-  	cv[i] = cp;
-
-  }
-
-  //threshold = *max_element(curvature.begin(), curvature.end());
-  threshold = min*-1.0;
-  cout<<"threshold: "<<threshold<<endl;
-
-  threshold = threshold/2.3;
-  //threshold = (threshold<0.0)?(threshold+(threshold/6.0)):(threshold-(threshold/6.0));
-  cout<<"threshold1: "<<threshold<<endl;
-
-  peaksInds.clear();
-  findPeaks(cv, threshold, peaksInds);
-
-  //Agregar keypoints
-  for(int i=0; i<peaksInds.size(); ++i)
-  {
-  	c.index = peaksInds[i];
-  	c.sIndex = s[peaksInds[i]];
-    c.curvature = curvature[peaksInds[i]];
-    keypoints.push_back(c);
-  }
-}
 
 void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<CurvatureTriplet>& keypoints, float min, float max, bool isMaxScale)
 {
@@ -224,14 +173,20 @@ void getCurvatureExtrema(vector<float> curvature, vector<float> s, vector<Curvat
 			
 			if(isMaxScale)
 			{
-				if(curvature[i]>0 && curvature[i]>(max/2.3) ||
-				   curvature[i]<0 && curvature[i]<(min/2.3)
+				//if(curvature[i]>0 && curvature[i]>(max/2.3) ||
+				//   curvature[i]<0 && curvature[i]<(min/2.3)
+				//  )
+				if( (curvature[i]>0 && curvature[i]>(max/2.3) && curvature[i]>abs(min/4.0)) ||
+				    (curvature[i]<0 && curvature[i]<(min/2.3) && abs(curvature[i])>(max/4.0))
 				  )
 				{
-					c.index = i;
-					c.sIndex = s[i];
-					c.curvature = curvature[i];
-					keypoints.push_back(c);
+					if( abs(curvature[i])>4e-4 )
+					{
+						c.index = i;
+						c.sIndex = s[i];
+						c.curvature = curvature[i];
+						keypoints.push_back(c);
+					}
 				}
 			}
 			else
@@ -315,14 +270,13 @@ void removeConstantCurvature(vector<CurvatureTriplet>& keypoints)
 	if(keypoints.size()==1)
 		keypointsArray[++counter] = keypoints[0];
 
-	keypoints = vector<CurvatureTriplet>(keypointsArray, keypointsArray + counter + 1 );
+	//keypoints = vector<CurvatureTriplet>(keypointsArray, keypointsArray + counter + 1 );
+	if(counter>-1)
+		keypoints = vector<CurvatureTriplet>(keypointsArray, keypointsArray + counter + 1 );
 }
 
-//void computeCurvature(PointCloud<PointXYZ> in, float sigma, int kernelWidth, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
-//void computeCurvature(PointCloud<PointXYZ> in, float sigma, int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints)
-//void computeCurvature(PointCloud<PointXYZ> in, float sigma, const int width, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0)
-void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale)
-//void computeCurvature(PointCloud<PointXYZ> in, float kernelFactor, vector<float>& curvature, vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale)
+void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSSIANS], vector<float> gaussian2[NUM_GAUSSIANS], float kernelFactor, vector<float>& curvature, 
+	vector<float>& s, vector<CurvatureTriplet>& keypoints, vector<float>& gauss, vector<float>& kernel0, bool isMaxScale)
 {
 	//kernel factor = percentage of the points to define the width and std deviation of gaussian kernel
 	int m = in.size();
@@ -331,9 +285,6 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 
 	cout<<"width: "<<kernelWidth<<endl;
 
-	//float gaussian0[kernelWidth];
-	//float gaussian1[kernelWidth];
-	//float gaussian2[kernelWidth];
 	float sum = 0.0;
 
 	int extension = kernelWidth/2;
@@ -353,39 +304,19 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 	int i, j, k;
 	curvature = vector<float>(in.points.size());
 
-	float sAux = s[0];
-	vector<float> sTmp(m+2*extension);
-
 	for(int i=0; i<extension; ++i)
 	{
 		tmp[i] = PointXYZ(in.points[0]);
-		//sAux = sAux - (s[(extension-1)-(i+1)]-s[(extension-1)-i]);
-		sAux = sAux - (s[i+1]-s[i]);
-		sTmp[extension-1-i] = sAux;
-
-		//yTmp[i] = in.points[0].y;
 	}
 
 	for(int i=0; i<in.points.size(); ++i)
 	{
 		tmp[i+extension] = PointXYZ(in.points[i]);
-		sTmp[i+extension] = s[i];
-
-		//yTmp[i+extension] = in.points[i].y;
 	}
 
-	sAux = s[m-1];
-
-	//for(int i=in.points.size(); i<in.points.size()+extension; ++i)
 	for(int i=0; i<extension; ++i)
 	{
-		//tmp[i+extension] = PointXYZ(in.points[in.points.size()-1]);
 		tmp[i+m+extension] = PointXYZ(in.points[in.points.size()-1]);
-		sAux = sAux + (s[m-i-1]-s[m-i-2]);
-		//sTmp[m+i] = sAux;
-		sTmp[i+m+extension] = sAux;
-
-		//yTmp[i+m+extension] = in.points[in.points.size()-1].y;
 	}
 
 
@@ -394,85 +325,60 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 
 	bool containsZeroCurvature = false;
 
-	/*VectorXd linspace;
-  	vector<float> sKernel;
-
-  	float leftLimit;
-    float rightLimit;
-    float u;
-
-    leftLimit = -0.2;
-   	rightLimit = 0.2;
-   	linspace = VectorXd::LinSpaced(kernelWidth,leftLimit,rightLimit);
-	sKernel = vector<float>(linspace.data(), linspace.data() + linspace.rows());
-	u = 0.0;
-   	sigma = 0.05;
-
-	for(j=0; j<kernelWidth; ++j)
-	{
-			//gaussian0[j] = exp(-( (sKernel[j]-u)*(sKernel[j]-u) )/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
-			gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sKernel[j]-u)*exp((-( (sKernel[j]-u)*(sKernel[j]-u)) ) / (2 * sigma*sigma));
-			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));
-
-			//gaussian0[j] = exp(-( (sTmp[i+j]-u)*(sTmp[i+j]-u) )/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
-			//gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sTmp[i+j]-u)*exp((-( (sTmp[i+j]-u)*(sTmp[i+j]-u)) ) / (2 * sigma*sigma));
-			//gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sTmp[i+j]-u)/sigma )*( (sTmp[i+j]-u)/sigma))-1)*(exp((-( (sTmp[i+j]-u)*(sTmp[i+j]-u) )) / (2 * sigma *sigma)));
-	}*/
+	vector<float> convolvedCurveX(in.size());
+	vector<float> convolvedCurveY(in.size());
   	
 	for(i = 0; i < in.size(); ++i)
 	{
-       	/*leftLimit = sTmp[i];
-       	rightLimit = sTmp[i+2*extension];
-       	linspace = VectorXd::LinSpaced(kernelWidth,leftLimit,rightLimit);
-  		sKernel = vector<float>(linspace.data(), linspace.data() + linspace.rows());
-  		u = sKernel[kernelWidth/2];
-       	//sigma = (u-sKernel[0])/3.5;
-       	//sigma = (u-sKernel[0])/3.0;
-       	//sigma = (u-sKernel[0])/3.1;
-       	sigma = (u-sKernel[0])/3.6;
+	   	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-kernelWidth/1000.0,kernelWidth/1000.0);
+		vector<float> sKernel(linspace.data(), linspace.data() + linspace.rows());
+	   	sigma = kernelWidth/4000.0;
 
-		for(j=0; j<kernelWidth; ++j)
-		{
-			//gaussian0[j] = exp(-( (sKernel[j]-u)*(sKernel[j]-u) )/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
-			gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sKernel[j]-u)*exp((-( (sKernel[j]-u)*(sKernel[j]-u)) ) / (2 * sigma*sigma));
-			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));
+	   	float gaussian0[kernelWidth];
+	   	float gaussian1[kernelWidth];
+	   	float gaussian2[kernelWidth];
 
-			//gaussian0[j] = exp(-( (sTmp[i+j]-u)*(sTmp[i+j]-u) )/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
-			//gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sTmp[i+j]-u)*exp((-( (sTmp[i+j]-u)*(sTmp[i+j]-u)) ) / (2 * sigma*sigma));
-			//gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sTmp[i+j]-u)/sigma )*( (sTmp[i+j]-u)/sigma))-1)*(exp((-( (sTmp[i+j]-u)*(sTmp[i+j]-u) )) / (2 * sigma *sigma)));
-		}*/
-
-		if(kernelFactor-0.1<0.001)
-		{
-			//printArray(gaussian1, kernelWidth);
-			//cout<<"*******************************"<<endl;
-		}
-
-
-		if(i==m/2)
-		{
-			//gauss = vector<float>(gaussian1, gaussian1 + sizeof(gaussian1) / sizeof(float) );
-			//kernel0 = sKernel;
-		}
+	   	for(j=0; j<kernelWidth; ++j)
+	   	{
+	   		gaussian0[j] = exp(-( (sKernel[j]*sKernel[j]) )/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));
+	   		gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI))) * sKernel[j] * exp( -(sKernel[j]*sKernel[j]) / (2 * sigma*sigma));
+			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI))) * ( ((sKernel[j]/sigma )*( sKernel[j]/sigma))-1 ) * exp( -(sKernel[j]*sKernel[j]) / (2 * sigma*sigma));;
+	   		//gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sKernel[j]-u)*exp((-( (sKernel[j]-u)*(sKernel[j]-u)) ) / (2 * sigma*sigma));
+			//gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));
+	   	}
 
 		//Convolution
 		for(j = 0; j<kernelWidth; ++j)
 		{
-			//x0 += tmp.points[i+j].x * gaussian0[j];
-			//y0 += tmp.points[i+j].y * gaussian0[j];
-		    
-		    /*x1 += tmp.points[i+j].x * gaussian1[j];
+			/*x0 += tmp.points[i+j].x * gaussian0[j];
+			y0 += tmp.points[i+j].y * gaussian0[j];
+			x1 += tmp.points[i+j].x * gaussian1[j];
 			y1 += tmp.points[i+j].y * gaussian1[j];
 			x2 += tmp.points[i+j].x * gaussian2[j];
 			y2 += tmp.points[i+j].y * gaussian2[j];*/
 
-			x1 += tmp.points[i+j].x * gaussian1[kernelWidth/2-1][j];
+			x0 += tmp.points[i+j].x * gaussian0[j];
+			y0 += tmp.points[i+j].z * gaussian0[j];
+			x1 += tmp.points[i+j].x * gaussian1[j];
+			y1 += tmp.points[i+j].z * gaussian1[j];
+			x2 += tmp.points[i+j].x * gaussian2[j];
+			y2 += tmp.points[i+j].z * gaussian2[j];
+			
+			/*x1 += tmp.points[i+j].x * gaussian1[kernelWidth/2-1][j];
 			y1 += tmp.points[i+j].y * gaussian1[kernelWidth/2-1][j];
 			x2 += tmp.points[i+j].x * gaussian2[kernelWidth/2-1][j];
-			y2 += tmp.points[i+j].y * gaussian2[kernelWidth/2-1][j];
+			y2 += tmp.points[i+j].y * gaussian2[kernelWidth/2-1][j];*/
+			
+			/*x1 += tmp.points[i+j].x * gaussian1[kernelWidth/2-1][j];
+			y1 += tmp.points[i+j].z * gaussian1[kernelWidth/2-1][j];
+			x2 += tmp.points[i+j].x * gaussian2[kernelWidth/2-1][j];
+			y2 += tmp.points[i+j].z * gaussian2[kernelWidth/2-1][j];*/
 		}
 
-		curvature[i] = (x1*y2-y1*x2);
+		convolvedCurveX[i] = x0;
+		convolvedCurveY[i] = y0;
+		//curvature[i] = (x1*y2-y1*x2);
+		curvature[i] = (x1*y2-y1*x2) / pow((x1*x1+y1*y1), 1.5);	
 
 		x0 = 0.0;
 		y0 = 0.0;
@@ -481,8 +387,8 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 		x2 = 0.0;
 		y2 = 0.0;
 
-		if(isMaxScale && abs(curvature[i])<1e6)
-			containsZeroCurvature=true;
+		//if(isMaxScale && abs(curvature[i])<1e6)
+			//containsZeroCurvature=true;
 
 		if(curvature[i]<min)
 			min = curvature[i];
@@ -490,17 +396,19 @@ void computeCurvature(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUSS
 			max = curvature[i];
 
 	}
-	
-	if(isMaxScale)
+
+	if((kernelFactor-0.8)<0.01 && (kernelFactor-0.8)>0)
 	{
-		if(containsZeroCurvature && (max-min)>7.5e5)
-			getCurvatureExtrema(curvature, s, keypoints, min, max, true);
-		//getCurvatureExtremaAtMaxScale(curvature, s, min, max, keypoints);
-		//cout<<"Max:"<<max<<", Min:"<<min<<endl;
-		//cout<<"Diff Max-Min:"<<(max-min)<<endl;
+		//plt::plot(convolvedCurveX, convolvedCurveY);
+		//plt::plot(curvature);
+		plt::plot(s, curvature);
+		plt::xlabel("t");
+		plt::ylabel("k");
+		plt::show();
+		//cout<<"Diff:"<<(max-min)<<endl;
 	}
-	else
-		getCurvatureExtrema(curvature, s, keypoints, min, max, false);
+
+	getCurvatureExtrema(curvature, s, keypoints, min, max, isMaxScale);
 }
 
 //void computeScaleSpace(vector<CurvatureTriplet> keypoints[SIGMA_SIZE][WIDTH_SIZE]) //, vector<CurvatureTriplet>& keypointsFinestScale)
@@ -511,6 +419,8 @@ void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUS
 	//float scales[NUM_SCALES] = {0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85};
 	//float scales[NUM_SCALES] = {0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75};
 
+	//float scales[NUM_SCALES] = {0.40, 0.45, 0.50, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8};
+
 	vector<float> curvature;
 	//vector<float> s;
  	
@@ -519,64 +429,54 @@ void computeScaleSpace(PointCloud<PointXYZ> in, vector<float> gaussian1[NUM_GAUS
  	vector<float> gauss;
 	vector<float> kernel0;
 
- 	//recorrido normal
+ 	//iterate all scales
  	for(int i=0; i<NUM_SCALES; ++i)
 	{
 		curvature.clear();
 
+		if(i==0 && in.size()<40)
+			continue;
+
+		//compute curvatures and store keypoints of current scale in keypoints[i]
 		if(i!=NUM_SCALES-1)
-			//computeCurvature(in, scales[i], curvature, s, keypoints[i], gauss, kernel0, false); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
-			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, false); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, false);
 		else
-			//computeCurvature(in, scales[i], curvature, s, keypoints[i], gauss, kernel0, true); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
-			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, true); //10% puntos = 7 ptos = distancia de 0.1 en x para la gaussiana y dev standar de 0.015
+			computeCurvature(in, gaussian1, gaussian2, scales[i], curvature, s, keypoints[i], gauss, kernel0, true);
 		
 		printKeypoints(keypoints[i]);
-
-		//if(i==NUM_SCALES-1)
-			//removeConstantCurvature(keypoints[i]);
-
-		if(i==15)
-		{
-			plt::plot(s, curvature);
-			//plt::plot(kernel0, gauss);
-			plt::show();
-		}
-
-		//cout<<"*******************************************"<<endl;
 	}
 }
 
 void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriplet> keypoints[NUM_SCALES], vector<float> s, PointCloud<PointXYZ>& keypointsCloud)
 {
 	vector<CurvatureTriplet> keypointsScaleIterator;
-	keypointsScaleIterator = keypoints[NUM_SCALES-1];
+	keypointsScaleIterator = keypoints[NUM_SCALES-1];//initialize the keypointsScaleIterator = keypoints at highest scale, which are the final keypoints
 	
 	vector<CurvatureCounter> keypointsFinalCounter(keypointsScaleIterator.size());
 
-
-	for(int k=0; k<keypointsFinalCounter.size(); ++k)
+	//initialize keypointsFinalCounter
+	for(int i=0; i<keypointsFinalCounter.size(); ++i)
 	{
 		CurvatureCounter cc;
-		cc.index = keypointsScaleIterator[k].index;
-		cc.curvature = keypointsScaleIterator[k].curvature;
+		cc.index = keypointsScaleIterator[i].index;
+		cc.curvature = keypointsScaleIterator[i].curvature;
 		cc.counter = 0;
 
-		keypointsFinalCounter[k] = cc;
+		keypointsFinalCounter[i] = cc;
 	}
 
-	//recorrido para llegar a la posicion del keypoint del finest scale
 	int idx;
 	//int idxAux = -1;
 	float threshold = 0.0;
 	
+	//Serch from the highest scale to the finest to find the final keypoints
 	for(int i=NUM_SCALES-1; i>0; --i)
 	{
 		for(int j=0; j<keypointsScaleIterator.size(); ++j)
 		{
-			//idx1 = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.0298, idx2);
 			if(keypointsScaleIterator[j].index>1 && keypointsScaleIterator[j].index<in.size()-2)
 			{
+				//see if we choose as threshold, the difference to the left or to the right
 				threshold = abs(s[keypointsScaleIterator[j].index]-s[keypointsScaleIterator[j].index-2])>abs(s[keypointsScaleIterator[j].index]-s[keypointsScaleIterator[j].index+2])?
 						abs(s[keypointsScaleIterator[j].index]-s[keypointsScaleIterator[j].index-2]):abs(s[keypointsScaleIterator[j].index]-s[keypointsScaleIterator[j].index+2]);
 			}
@@ -585,25 +485,13 @@ void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriple
 
 			if(i==1)
 				idx = findByThresholdAtMinScale(keypointsScaleIterator[j], keypoints[i-1], threshold);
-				//idx = findByThresholdAtMinScale(keypointsScaleIterator[j], keypoints[i-1], 0.0298);
-				//idx = findByThresholdAtMinScale(keypointsScaleIterator[j], keypoints[i-1], 0.02);
-				//idx = findByThresholdAtMinScale(keypointsScaleIterator[j], keypoints[i-1], 0.05587);
 			else
-				//idx = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.0298);
 				idx = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], threshold);
-				//idx = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.02);
-				//idx = findByThreshold(keypointsScaleIterator[j], keypoints[i-1], 0.03);
 	
 			if(idx!=-1)
 			{
-				/*keypointsScaleIterator[j].index = keypoints[i-1][idx2].index;
-				keypointsScaleIterator[j].sIndex = keypoints[i-1][idx2].sIndex;
-
-				keypointsFinalCounter[j].index = keypoints[i-1][idx2].index;
-				keypointsFinalCounter[j].counter = keypointsFinalCounter[j].counter + 1;*/
-
-				keypointsScaleIterator[j].index = idx;
-				keypointsScaleIterator[j].sIndex = s[idx];
+				keypointsScaleIterator[j].index = idx; //overwriteScaleIterator
+				keypointsScaleIterator[j].sIndex = s[idx]; //overwriteScaleIterator
 
 				keypointsFinalCounter[j].index = idx;
 				keypointsFinalCounter[j].counter = keypointsFinalCounter[j].counter + 1;
@@ -611,7 +499,6 @@ void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriple
 			}
 			
 			cout<<keypointsFinalCounter[j].index<<"->"<<keypointsFinalCounter[j].counter<<", ";	
-			//cout<<keypointsScaleIterator[j].index<<"->"<<keypointsScaleIterator[j].sIndex<<", ";
 		}
 
 		cout<<endl;
@@ -621,7 +508,8 @@ void getFinalKeypointsAtMinScale(PointCloud<PointXYZ> in, vector<CurvatureTriple
 
 	for(int j=0; j<keypointsFinalCounter.size(); ++j)
 	{
-		if(keypointsFinalCounter[j].counter>10)
+		//if(keypointsFinalCounter[j].counter>6)
+		if(keypointsFinalCounter[j].counter>10) //keypoints must have been found in at least 10 scales out of 16
 			keypointsCloud.push_back(in[keypointsFinalCounter[j].index]);
 	}
 }

@@ -33,7 +33,7 @@ simpleVis (PointCloud<PointXYZ>::ConstPtr cloud, PointCloud<PointXYZ>::ConstPtr 
 
   PointCloud<PointXYZ>::Ptr cloud1(new PointCloud<PointXYZ>);
   cloud1->push_back((*cloud)[0]);
-  cloud1->push_back((*cloud)[1]);
+  //cloud1->push_back((*cloud)[1]);
 
   boost::shared_ptr<visualization::PCLVisualizer> viewer (new visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
@@ -53,13 +53,6 @@ simpleVis (PointCloud<PointXYZ>::ConstPtr cloud, PointCloud<PointXYZ>::ConstPtr 
   return (viewer);
 }
 
-/*struct CompareSet {
-  bool operator() (const float& lhs, const float& rhs) const
-  {
-  	return lhs<rhs;
-  }
-};*/
-
 
 int main (int argc, char** argv)
 {
@@ -76,6 +69,7 @@ int main (int argc, char** argv)
 
 	initKernels(gaussian1, gaussian2);
 
+
 	clock_t begin = clock();
 	computeScaleSpace(*cloud, gaussian1, gaussian2, keypoints, s);
 	//computeScaleSpace(*cloud, keypoints, s);
@@ -85,6 +79,23 @@ int main (int argc, char** argv)
   	cout<<"************************************"<<endl<<endl;
   	cout<<"Ring extraction time: "<<elapsed_secs<<endl;
   	cout<<"************************************"<<endl<<endl;
+
+  	/*for(int i=0; i<1698; i++)
+  	{
+  		stringstream ss;
+  		ss<<"/home/claydergc/catkin_ws/simulated_segments/segment"<<i<<".pcd";
+  		pcl::io::loadPCDFile (ss.str(), *cloud);
+  		clock_t begin = clock();
+		computeScaleSpace(*cloud, gaussian1, gaussian2, keypoints, s);
+		getFinalKeypointsAtMinScale(*cloud, keypoints, s, *keypointsCloud);
+		clock_t end = clock();  
+  		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  		cout<<"************************************"<<endl<<endl;
+  		cout<<"Ring extraction time: "<<elapsed_secs<<endl;
+  		cout<<"************************************"<<endl<<endl;
+
+
+  	}*/
 
 
 	boost::shared_ptr<visualization::PCLVisualizer> viewer;
@@ -113,10 +124,11 @@ int main (int argc, char** argv)
 	//for(int kernelWidth=3; kernelWidth<=241; kernelWidth+=2)
 	for(int kernelWidth=3; kernelWidth<=321; kernelWidth+=2)
 	{
-	   	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-0.2,0.2);
+	   	//VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-0.2,0.2);
+	   	VectorXd linspace = VectorXd::LinSpaced(kernelWidth,-kernelWidth/1000.0,kernelWidth/1000.0);
 		vector<float> sKernel(linspace.data(), linspace.data() + linspace.rows());
-		float u = 0.0;
-	   	float sigma = 0.05;
+	   	//float sigma = 0.05;
+	   	float sigma = kernelWidth/4000.0;
 	   	float gaussian1[kernelWidth];
 		float gaussian2[kernelWidth];
 
@@ -129,8 +141,9 @@ int main (int argc, char** argv)
 		for(int j=0; j<kernelWidth; ++j)
 		{
 
-			gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(sKernel[j]-u)*exp((-( (sKernel[j]-u)*(sKernel[j]-u)) ) / (2 * sigma*sigma));
-			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI)))*(( ((sKernel[j]-u)/sigma )*( (sKernel[j]-u)/sigma))-1)*(exp((-( (sKernel[j]-u)*(sKernel[j]-u) )) / (2 * sigma *sigma)));
+			gaussian1[j] = (-1/(sigma*sigma*sigma*sqrt(2*M_PI))) * sKernel[j] * exp( -(sKernel[j]*sKernel[j]) / (2 * sigma*sigma));
+			gaussian2[j] = (1/(sigma*sigma*sigma*sqrt(2*M_PI))) * ( ((sKernel[j]/sigma )*( sKernel[j]/sigma))-1 ) * exp( -(sKernel[j]*sKernel[j]) / (2 * sigma*sigma));;
+			
 			if (j!=kernelWidth-1)
 			{
 				ss1<<gaussian1[j]<<",";
