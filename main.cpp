@@ -40,10 +40,12 @@ simpleVis (PointCloud<PointXYZ>::ConstPtr cloud, PointCloud<PointXYZ>::ConstPtr 
   viewer->addPointCloud<PointXYZ> (cloud, "sample cloud");
   viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 5, "sample cloud");
 
+  //Keypoints
   visualization::PointCloudColorHandlerCustom<PointXYZ> cloud_color_handler (cloud2, 0, 255, 0);
   viewer->addPointCloud<PointXYZ> (cloud2, cloud_color_handler, "cloud2");
   viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 10, "cloud2");
 
+  //Starting point
   visualization::PointCloudColorHandlerCustom<PointXYZ> cloud_color_handler2 (cloud1, 255, 0, 0);
   viewer->addPointCloud<PointXYZ> (cloud1, cloud_color_handler2, "cloud1");
   viewer->setPointCloudRenderingProperties (visualization::PCL_VISUALIZER_POINT_SIZE, 7, "cloud1");
@@ -99,8 +101,8 @@ int main (int argc, char** argv)
 
   	}*/
 
-  	cloud->clear();
-  	*cloud = convolvedCurves[14];
+  	//cloud->clear();
+  	//*cloud = convolvedCurves[15];
 
 	boost::shared_ptr<visualization::PCLVisualizer> viewer;
   	//viewer = simpleVis(filteredCloud2, keypointsCloud);
