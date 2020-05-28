@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-project(curvature_estimation)
+project(css_vlp16)
 
 find_package(PCL 1.8 REQUIRED)
 
@@ -15,6 +15,6 @@ add_definitions(${PCL_DEFINITIONS})
 #add_executable (range_measure range_measure.cpp)
 #target_link_libraries (range_measure ${PCL_LIBRARIES} python2.7)
 
-add_executable (main main.cpp css.cpp gaussians.cpp util.cpp)
+add_executable (main main.cpp css.cpp gaussians.cpp)
 target_link_libraries (main ${PCL_LIBRARIES} python2.7 boost_iostreams boost_system boost_filesystem)
 
